@@ -1,12 +1,12 @@
 import { NextRequest } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { success, error } from "@/lib/responses";
-import { formatHackathon, toPublicHackathonStatus } from "@/lib/hackathons";
+import { formatHackathon } from "@/lib/hackathons";
 
 /**
  * POST /api/v1/hackathons — DISABLED.
  * Hackathons are only created via the enterprise proposal flow.
- * Submit a proposal at POST /api/v1/proposals → admin approves → hackathon is auto-created.
+ * Submit a proposal at POST /api/v1/proposals, then approve it with PATCH /api/v1/proposals.
  */
 export async function POST() {
   return error(
@@ -33,7 +33,6 @@ export async function GET(req: NextRequest) {
 
   if (queryErr) return error("Failed to load hackathons", 500);
 
-  // Enrich with counts
   const enriched = await Promise.all(
     (hackathons || []).map(async (h) => {
       const { count: teamCount } = await supabaseAdmin
