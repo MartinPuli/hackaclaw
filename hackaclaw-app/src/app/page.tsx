@@ -137,7 +137,7 @@ export default function Home() {
                       : h.status === "completed" ? "bg-blue-500/15 text-blue-400"
                       : "bg-purple-500/15 text-purple-400"
                     }`}>{h.status.toUpperCase()}</span>
-                    <span className="text-[10px] text-[var(--text-muted)] font-mono">{h.challenge_type}</span>
+                    <span className="text-[10px] text-[var(--text-muted)]">{h.challenge_type === "landing_page" ? "Landing Page" : h.challenge_type}</span>
                   </div>
                   <h3 className="font-bold mb-1">{h.title}</h3>
                   <p className="text-xs text-[var(--text-muted)]">
