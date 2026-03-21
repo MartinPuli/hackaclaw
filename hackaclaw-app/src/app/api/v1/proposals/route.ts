@@ -2,6 +2,7 @@ import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { authenticateAdminRequest, hashToken } from "@/lib/auth";
+import { sendApprovalEmail } from "@/lib/email";
 import { v4 as uuid } from "uuid";
 
 function sanitize(val: unknown, max: number): string | null {
@@ -16,6 +17,10 @@ function generateJudgeKey(): string {
 
 /**
  * POST /api/v1/proposals — Submit an enterprise proposal (public, no auth).
+ *
+ * If judge_agent="own", generates a judge_xxx key immediately and returns it.
+ * The enterprise saves this key — it will work once the hackathon is approved and created.
+ * The key hash is stored in the proposal so it can be copied to the hackathon on approval.
  */
 export async function POST(req: NextRequest) {
   try {
@@ -28,6 +33,9 @@ export async function POST(req: NextRequest) {
     const judgeAgent = sanitize(body.judge_agent, 50);
     const budget = sanitize(body.budget, 100);
     const timeline = sanitize(body.timeline, 100);
+    const prizeAmount = sanitize(body.prize_amount, 20);
+    const judgingPriorities = sanitize(body.judging_priorities, 2000);
+    const techRequirements = sanitize(body.tech_requirements, 2000);
 
     const hackathonConfig = {
       title: sanitize(body.hackathon_title, 200),
@@ -35,7 +43,7 @@ export async function POST(req: NextRequest) {
       rules: sanitize(body.hackathon_rules, 2000),
       deadline: sanitize(body.hackathon_deadline, 30),
       min_participants: Math.max(2, Math.min(500, Number(body.hackathon_min_participants) || 5)),
-      challenge_type: sanitize(body.challenge_type, 50) || "landing_page",
+      challenge_type: sanitize(body.challenge_type, 50) || "other",
     };
 
     if (!hackathonConfig.title || !hackathonConfig.brief || !hackathonConfig.deadline) {
@@ -59,6 +67,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Generate judge key upfront if custom judge selected
+    const isCustomJudge = judgeAgent === "own";
+    let judgeKey: string | null = null;
+    let judgeKeyHash: string | null = null;
+
+    if (isCustomJudge) {
+      judgeKey = generateJudgeKey();
+      judgeKeyHash = hashToken(judgeKey);
+    }
+
     const id = uuid();
     const { error: insertErr } = await supabaseAdmin
       .from("enterprise_proposals")
@@ -71,7 +89,13 @@ export async function POST(req: NextRequest) {
         judge_agent: judgeAgent,
         budget,
         timeline,
-        hackathon_config: hackathonConfig,
+        prize_amount: prizeAmount ? Number(prizeAmount) : null,
+        judging_priorities: judgingPriorities,
+        tech_requirements: techRequirements,
+        hackathon_config: {
+          ...hackathonConfig,
+          ...(judgeKeyHash ? { judge_key_hash: judgeKeyHash } : {}),
+        },
         status: "pending",
         created_at: new Date().toISOString(),
       });
@@ -84,10 +108,20 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    return NextResponse.json(
-      { success: true, data: { id, message: "Proposal submitted. We'll review it and get back to you." } },
-      { status: 201 },
-    );
+    // Build response
+    const responseData: Record<string, unknown> = {
+      id,
+      message: "Challenge submitted. We'll review it and get back to you.",
+    };
+
+    // If custom judge, return the key — this is the ONLY time it's shown
+    if (judgeKey) {
+      responseData.judge_api_key = judgeKey;
+      responseData.judge_skill_url = "https://buildersclaw.vercel.app/judge-skill.md";
+      responseData.judge_instructions = "Save this judge API key NOW — it will NOT be shown again. It activates when your hackathon is approved. Tell your judge agent to read the judge-skill.md for instructions.";
+    }
+
+    return NextResponse.json({ success: true, data: responseData }, { status: 201 });
   } catch {
     return NextResponse.json(
       { success: false, error: { message: "Invalid request" } },
@@ -121,6 +155,7 @@ export async function GET(req: NextRequest) {
  * Body: { id, status: "approved" | "rejected", notes? }
  *
  * On "approved": auto-creates the hackathon from hackathon_config.
+ * The judge_key_hash from the proposal is copied to the hackathon's judging_criteria.
  */
 export async function PATCH(req: NextRequest) {
   if (!authenticateAdminRequest(req)) {
@@ -139,7 +174,6 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
-    // Fetch the proposal to get hackathon_config
     const { data: proposal } = await supabaseAdmin
       .from("enterprise_proposals")
       .select("*")
@@ -156,13 +190,13 @@ export async function PATCH(req: NextRequest) {
 
     let hackathonId: string | null = null;
     let hackathonUrl: string | null = null;
-    let judgeKey: string | null = null;
 
     // Auto-create hackathon on approve
     if (newStatus === "approved" && proposal.hackathon_config) {
       const cfg = proposal.hackathon_config as {
         title?: string; brief?: string; rules?: string;
         deadline?: string; min_participants?: number; challenge_type?: string;
+        judge_key_hash?: string;
       };
 
       if (cfg.title && cfg.brief && cfg.deadline) {
@@ -170,25 +204,18 @@ export async function PATCH(req: NextRequest) {
         if (!isNaN(endsAt.getTime()) && endsAt.getTime() > Date.now()) {
           hackathonId = uuid();
 
-          // Build judging_criteria with enterprise context
           const isCustomJudge = proposal.judge_agent === "own";
-          
-          // Generate judge key if custom judge
-          if (isCustomJudge) {
-            judgeKey = generateJudgeKey();
-          }
 
           const judgingCriteria = JSON.stringify({
             _format: "hackaclaw-mvp-v1",
             judge_type: isCustomJudge ? "custom" : "platform",
-            ...(isCustomJudge ? { judge_key_hash: hashToken(judgeKey!) } : {}),
+            ...(isCustomJudge && cfg.judge_key_hash ? { judge_key_hash: cfg.judge_key_hash } : {}),
             enterprise_problem: proposal.problem_description,
             enterprise_requirements: proposal.tech_requirements || null,
             judging_priorities: proposal.judging_priorities || null,
             criteria_text: cfg.rules || null,
             prize_amount: proposal.prize_amount || 0,
             company: proposal.company,
-            // Filled after judging
             winner_agent_id: null,
             winner_team_id: null,
             finalized_at: null,
@@ -222,7 +249,6 @@ export async function PATCH(req: NextRequest) {
           if (insertErr) {
             console.error("Auto hackathon creation failed:", insertErr);
             hackathonId = null;
-            judgeKey = null;
           } else {
             hackathonUrl = `/hackathons/${hackathonId}`;
           }
@@ -243,17 +269,24 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ success: false, error: { message: "Update failed" } }, { status: 500 });
     }
 
+    // Send approval email
+    if (hackathonId && proposal.contact_email) {
+      const cfg = proposal.hackathon_config as { title?: string } | null;
+      await sendApprovalEmail({
+        to: proposal.contact_email,
+        company: proposal.company,
+        hackathonTitle: cfg?.title || "Hackathon",
+        hackathonUrl: `/hackathons/${hackathonId}`,
+        judgeType: proposal.judge_agent === "own" ? "custom" : "platform",
+      });
+    }
+
     return NextResponse.json({
       success: true,
       data: {
         id,
         status: hackathonId ? "hackathon_created" : newStatus,
         ...(hackathonId ? { hackathon_id: hackathonId, hackathon_url: hackathonUrl } : {}),
-        ...(judgeKey ? {
-          judge_api_key: judgeKey,
-          judge_skill_url: "https://buildersclaw.vercel.app/judge-skill.md",
-          judge_instructions: "Save this judge_api_key — it's shown only once. Your judge agent uses it to submit scores.",
-        } : {}),
       },
     });
   } catch {

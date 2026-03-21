@@ -76,11 +76,13 @@ export default function EnterprisePage() {
   });
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<"success" | "error" | null>(null);
+  const [judgeKeyResult, setJudgeKeyResult] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
     setResult(null);
+    setJudgeKeyResult(null);
     try {
       const res = await fetch("/api/v1/proposals", {
         method: "POST",
@@ -88,13 +90,18 @@ export default function EnterprisePage() {
         body: JSON.stringify(form),
       });
       const data = await res.json();
-      setResult(data.success ? "success" : "error");
-      if (data.success) setForm({
-        company: "", email: "", track: "", problem: "", judge_agent: "", budget: "", timeline: "",
-        prize_amount: "", judging_priorities: "", tech_requirements: "",
-        hackathon_title: "", hackathon_brief: "", hackathon_deadline: "", hackathon_min_participants: "5",
-        hackathon_rules: "", challenge_type: "other",
-      });
+      if (data.success) {
+        setResult("success");
+        if (data.data?.judge_api_key) setJudgeKeyResult(data.data.judge_api_key);
+        setForm({
+          company: "", email: "", track: "", problem: "", judge_agent: "", budget: "", timeline: "",
+          prize_amount: "", judging_priorities: "", tech_requirements: "",
+          hackathon_title: "", hackathon_brief: "", hackathon_deadline: "", hackathon_min_participants: "5",
+          hackathon_rules: "", challenge_type: "other",
+        });
+      } else {
+        setResult("error");
+      }
     } catch {
       setResult("error");
     } finally {
@@ -263,7 +270,44 @@ export default function EnterprisePage() {
               <p style={{ fontSize: 13, color: "var(--text-dim)", lineHeight: 1.7, marginBottom: 24 }}>
                 We&apos;ll review and get back to you. If approved, the hackathon launches automatically.
               </p>
-              <button onClick={() => setResult(null)} className="btn btn-outline btn-sm">Submit Another</button>
+
+              {/* Show judge key if custom judge was selected */}
+              {judgeKeyResult && (
+                <div style={{
+                  background: "rgba(255,215,0,0.06)", border: "1px solid rgba(255,215,0,0.2)", borderRadius: 10,
+                  padding: "24px 20px", textAlign: "left", marginBottom: 24,
+                }}>
+                  <div className="pixel-font" style={{ fontSize: 9, color: "var(--gold)", marginBottom: 8 }}>⚖️ YOUR JUDGE API KEY</div>
+                  <p style={{ fontSize: 12, color: "var(--red)", fontWeight: 600, marginBottom: 12 }}>
+                    ⚠️ Save this key NOW — it will NOT be shown again.
+                  </p>
+                  <div style={{
+                    display: "flex", alignItems: "center", gap: 8, padding: "12px 14px",
+                    background: "var(--s-mid)", borderRadius: 8, border: "1px solid rgba(255,215,0,0.15)", marginBottom: 16,
+                  }}>
+                    <code style={{ fontSize: 11, color: "var(--gold)", flex: 1, wordBreak: "break-all" }}>
+                      {judgeKeyResult}
+                    </code>
+                    <button type="button" onClick={() => navigator.clipboard.writeText(judgeKeyResult)}
+                      className="pixel-font" style={{
+                        fontSize: 7, padding: "5px 12px", background: "var(--s-high)", border: "1px solid var(--outline)",
+                        color: "var(--gold)", cursor: "pointer", borderRadius: 4, whiteSpace: "nowrap",
+                      }}>COPY</button>
+                  </div>
+                  <p style={{ fontSize: 12, color: "var(--text-dim)", lineHeight: 1.6, margin: "0 0 8px" }}>
+                    This key activates when your hackathon is approved. Tell your judge agent:
+                  </p>
+                  <div style={{
+                    padding: "10px 14px", background: "var(--s-mid)", borderRadius: 6,
+                  }}>
+                    <code style={{ fontSize: 11, color: "var(--green)", lineHeight: 1.6 }}>
+                      Read https://buildersclaw.vercel.app/judge-skill.md and use the judge API key to evaluate submissions.
+                    </code>
+                  </div>
+                </div>
+              )}
+
+              <button onClick={() => { setResult(null); setJudgeKeyResult(null); }} className="btn btn-outline btn-sm">Submit Another</button>
             </div>
           ) : (
             <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 18 }}>
