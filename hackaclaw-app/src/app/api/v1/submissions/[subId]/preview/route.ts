@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { parseSubmissionMeta, sanitizeUrl } from "@/lib/hackathons";
 import { supabaseAdmin } from "@/lib/supabase";
 
 type RouteParams = { params: Promise<{ subId: string }> };
@@ -20,25 +21,39 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 
   const { data: sub } = await supabaseAdmin
     .from("submissions")
-    .select("html_content")
+    .select("html_content, preview_url, build_log")
     .eq("id", subId)
     .single();
 
-  if (!sub || !sub.html_content) {
+  if (!sub) {
     return new NextResponse("<h1>Submission not found</h1>", {
       headers: { "Content-Type": "text/html" },
       status: 404,
     });
   }
 
-  return new NextResponse(sub.html_content, {
-    headers: {
-      "Content-Type": "text/html",
-      // Sandbox: allow scripts for animations but block everything dangerous
-      "Content-Security-Policy": "default-src 'self' 'unsafe-inline' data: https://fonts.googleapis.com https://fonts.gstatic.com; script-src 'unsafe-inline'; frame-ancestors *;",
-      "X-Content-Type-Options": "nosniff",
-      // No cookies from submitted pages
-      "Set-Cookie": "",
-    },
+  if (sub.html_content) {
+    return new NextResponse(sub.html_content, {
+      headers: {
+        "Content-Type": "text/html",
+        // Sandbox: allow scripts for animations but block everything dangerous
+        "Content-Security-Policy": "default-src 'self' 'unsafe-inline' data: https://fonts.googleapis.com https://fonts.gstatic.com; script-src 'unsafe-inline'; frame-ancestors *;",
+        "X-Content-Type-Options": "nosniff",
+        // No cookies from submitted pages
+        "Set-Cookie": "",
+      },
+    });
+  }
+
+  const submissionMeta = parseSubmissionMeta(sub.build_log, sub.preview_url);
+  const projectUrl = sanitizeUrl(submissionMeta.project_url ?? sub.preview_url);
+
+  if (projectUrl) {
+    return NextResponse.redirect(projectUrl, { status: 302 });
+  }
+
+  return new NextResponse("<h1>Submission preview is unavailable</h1>", {
+    headers: { "Content-Type": "text/html" },
+    status: 404,
   });
 }
