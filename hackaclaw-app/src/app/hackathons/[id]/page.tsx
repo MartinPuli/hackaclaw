@@ -355,7 +355,7 @@ function PixelSun({ angle }: { angle: number }) {
   const cy = 85 - 70 * Math.sin(rad);
   if (angle <= 0 || angle >= 180) return null;
   return (
-    <div className="absolute" style={{
+    <div className="fixed pointer-events-none" style={{
       left: `${cx}%`, top: `${cy}%`, transform: "translate(-50%,-50%)", zIndex: 0,
     }}>
       <svg viewBox="0 0 24 24" width={48} height={48} style={{ imageRendering: "pixelated" }}>
@@ -380,7 +380,7 @@ function PixelMoon({ angle }: { angle: number }) {
   const cy = 85 - 70 * Math.sin(rad);
   if (angle <= 0 || angle >= 180) return null;
   return (
-    <div className="absolute" style={{
+    <div className="fixed pointer-events-none" style={{
       left: `${cx}%`, top: `${cy}%`, transform: "translate(-50%,-50%)", zIndex: 0,
     }}>
       <svg viewBox="0 0 20 20" width={40} height={40} style={{ imageRendering: "pixelated" }}>
@@ -506,10 +506,10 @@ function PixelMushroom({ color = "#f44336" }: { color?: string }) {
 
 /* ─── Animated Pixel Bird ─── */
 
-function PixelBird({ delay = 0, top = 60, speed = 18 }: { delay?: number; top?: number; speed?: number }) {
+function PixelBird({ delay = 0, topPct = "10%", speed = 18 }: { delay?: number; topPct?: string; speed?: number }) {
   return (
     <div className="absolute" style={{
-      top, left: -30,
+      top: topPct, left: -30,
       animation: `cloud-drift ${speed}s linear infinite`,
       animationDelay: `${delay}s`,
     }}>
@@ -573,40 +573,56 @@ function PixelFence() {
 
 function PixelRooftop() {
   return (
-    <div>
-      {/* Antenna */}
-      <div className="flex justify-center mb-[-2px]">
-        <svg viewBox="0 0 12 20" width={18} height={30} style={{ imageRendering: "pixelated" }}>
-          <rect x={5} y={0} width={2} height={4} fill="#f44336" />
-          <rect x={4} y={4} width={4} height={2} fill="#bbb" />
-          <rect x={5} y={6} width={2} height={14} fill="#999" />
-          <rect x={4} y={12} width={4} height={2} fill="#aaa" />
+    <div className="relative">
+      {/* Flag on top */}
+      <div className="flex justify-center" style={{ marginBottom: -2 }}>
+        <svg viewBox="0 0 20 36" width={24} height={44} style={{ imageRendering: "pixelated" }}>
+          {/* Pole */}
+          <rect x={9} y={8} width={2} height={28} fill="#bdbdbd" />
+          <rect x={8} y={34} width={4} height={2} fill="#999" />
+          {/* Flag */}
+          <rect x={11} y={8} width={8} height={2} fill="#f44336" />
+          <rect x={11} y={10} width={8} height={2} fill="#e53935" />
+          <rect x={11} y={12} width={8} height={2} fill="#f44336" />
+          <rect x={11} y={14} width={6} height={2} fill="#d32f2f" />
+          {/* Antenna light */}
+          <rect x={8} y={6} width={4} height={3} fill="#f44336" />
+          <rect x={9} y={5} width={2} height={2} fill="#ff5252" />
         </svg>
       </div>
-      {/* Roof triangle */}
-      <div style={{
-        height: 0,
-        borderLeft: "40px solid transparent",
-        borderRight: "40px solid transparent",
-        borderBottom: "28px solid #5d4037",
-        margin: "0 auto",
-        width: 0,
-      }} />
-      {/* Roof base */}
-      <div style={{
-        height: 16,
-        background: "repeating-linear-gradient(90deg, #6d4c41 0px, #6d4c41 12px, #5d4037 12px, #5d4037 16px, #795548 16px, #795548 28px, #6d4c41 28px, #6d4c41 32px)",
-        borderTop: "3px solid #795548",
-        borderBottom: "3px solid #4e342e",
-        imageRendering: "pixelated" as CSSProperties["imageRendering"],
-      }} />
-      {/* Rooftop grass */}
+      {/* Roof — brick triangle shape via SVG */}
+      <svg viewBox="0 0 200 40" width="100%" height={40} preserveAspectRatio="none" style={{ display: "block", imageRendering: "pixelated" }}>
+        {/* Main roof shape */}
+        <polygon points="100,0 0,40 200,40" fill="#6d4c41" />
+        <polygon points="100,0 10,40 190,40" fill="#795548" />
+        <polygon points="100,4 20,40 180,40" fill="#8d6e63" />
+        {/* Roof lines */}
+        <rect x={0} y={36} width={200} height={4} fill="#5d4037" />
+        {/* Window in attic */}
+        <rect x={90} y={20} width={20} height={16} fill="#3e2723" />
+        <rect x={92} y={22} width={16} height={12} fill="#4fc3f7" opacity={0.6} />
+        <rect x={99} y={22} width={2} height={12} fill="#5d4037" />
+        <rect x={92} y={27} width={16} height={2} fill="#5d4037" />
+      </svg>
+      {/* Overhang / eaves */}
       <div style={{
         height: 8,
-        background: "repeating-linear-gradient(90deg, #4caf50 0px, #4caf50 6px, #388e3c 6px, #388e3c 10px, #66bb6a 10px, #66bb6a 14px, #4caf50 14px, #4caf50 20px)",
-        borderBottom: "2px solid #2e7d32",
+        background: "#4e342e",
+        borderBottom: "3px solid #3e2723",
+        marginTop: -1,
         imageRendering: "pixelated" as CSSProperties["imageRendering"],
       }} />
+      {/* Rooftop gutter with grass growing */}
+      <div className="relative" style={{
+        height: 10,
+        background: "repeating-linear-gradient(90deg, #4caf50 0px, #4caf50 5px, #388e3c 5px, #388e3c 9px, #66bb6a 9px, #66bb6a 13px, #4caf50 13px, #4caf50 18px)",
+        borderBottom: "2px solid #2e7d32",
+        imageRendering: "pixelated" as CSSProperties["imageRendering"],
+      }}>
+        {/* Small plants on gutter */}
+        <div className="absolute bottom-[8px] left-[15%]"><PixelPlant /></div>
+        <div className="absolute bottom-[8px] right-[15%]"><PixelPlant /></div>
+      </div>
     </div>
   );
 }
@@ -1128,14 +1144,17 @@ export default function HackathonDetailPage({ params }: { params: Promise<{ id: 
       <PixelSun angle={sunAngle} />
       <PixelMoon angle={moonAngle} />
 
-      {/* Pixel clouds — multiple layers */}
+      {/* Pixel clouds — spread across entire height */}
       {[
-        { w: 10, h: 10, top: 75, speed: 22, delay: "0s" },
-        { w: 8, h: 8, top: 110, speed: 30, delay: "-8s" },
-        { w: 12, h: 10, top: 95, speed: 40, delay: "-20s" },
-        { w: 6, h: 6, top: 130, speed: 35, delay: "-12s" },
-        { w: 14, h: 10, top: 60, speed: 50, delay: "-25s" },
-        { w: 9, h: 8, top: 145, speed: 28, delay: "-5s" },
+        { w: 10, h: 10, top: "6%", speed: 22, delay: "0s" },
+        { w: 8, h: 8, top: "14%", speed: 30, delay: "-8s" },
+        { w: 12, h: 10, top: "10%", speed: 40, delay: "-20s" },
+        { w: 6, h: 6, top: "22%", speed: 35, delay: "-12s" },
+        { w: 14, h: 10, top: "4%", speed: 50, delay: "-25s" },
+        { w: 9, h: 8, top: "30%", speed: 28, delay: "-5s" },
+        { w: 10, h: 8, top: "40%", speed: 32, delay: "-15s" },
+        { w: 7, h: 6, top: "50%", speed: 38, delay: "-22s" },
+        { w: 11, h: 8, top: "55%", speed: 45, delay: "-10s" },
       ].map((c, i) => (
         <div key={i} className="pixel-cloud" style={{
           width: c.w, height: c.h, top: c.top,
@@ -1146,10 +1165,13 @@ export default function HackathonDetailPage({ params }: { params: Promise<{ id: 
         }} />
       ))}
 
-      {/* Birds */}
-      <PixelBird delay={0} top={70} speed={20} />
-      <PixelBird delay={-7} top={90} speed={25} />
-      <PixelBird delay={-14} top={55} speed={18} />
+      {/* Birds — spread across the page height */}
+      <PixelBird delay={0} topPct="8%" speed={20} />
+      <PixelBird delay={-7} topPct="18%" speed={25} />
+      <PixelBird delay={-14} topPct="5%" speed={18} />
+      <PixelBird delay={-3} topPct="35%" speed={22} />
+      <PixelBird delay={-10} topPct="45%" speed={28} />
+      <PixelBird delay={-18} topPct="28%" speed={16} />
 
       {/* Fireflies at night */}
       {skyTheme.starsVisible && <PixelFireflies />}
