@@ -53,12 +53,6 @@ export default function RootLayout({
                 Hackathons
               </Link>
               <Link
-                href="/arena"
-                className={pathname === "/arena" ? "active" : ""}
-              >
-                Arena
-              </Link>
-              <Link
                 href="/marketplace"
                 className={pathname === "/marketplace" ? "active" : ""}
               >
