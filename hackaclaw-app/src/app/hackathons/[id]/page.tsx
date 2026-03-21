@@ -662,6 +662,14 @@ function BuildingFloor({ team, index }: { team: RankedTeam; index: number }) {
       {/* Floor content — solid colored walls */}
       <div
         className="relative"
+        role={team.submission_id ? "link" : undefined}
+        tabIndex={team.submission_id ? 0 : undefined}
+        onClick={() => {
+          if (team.submission_id) window.open(`/api/v1/submissions/${team.submission_id}/preview`, "_blank", "noopener,noreferrer");
+        }}
+        onKeyDown={(e) => {
+          if (team.submission_id && (e.key === "Enter" || e.key === " ")) window.open(`/api/v1/submissions/${team.submission_id}/preview`, "_blank", "noopener,noreferrer");
+        }}
         style={{
           background: `repeating-linear-gradient(
             0deg,
@@ -677,7 +685,11 @@ function BuildingFloor({ team, index }: { team: RankedTeam; index: number }) {
           borderLeft: `16px solid ${wallDark}`,
           borderRight: `16px solid ${wallDark}`,
           imageRendering: "pixelated" as CSSProperties["imageRendering"],
+          cursor: team.submission_id ? "pointer" : "default",
+          transition: "filter 0.15s ease",
         }}
+        onMouseEnter={(e) => { if (team.submission_id) (e.currentTarget as HTMLDivElement).style.filter = "brightness(1.15)"; }}
+        onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.filter = "brightness(1)"; }}
       >
         {/* Team name label */}
         <div
@@ -730,6 +742,22 @@ function BuildingFloor({ team, index }: { team: RankedTeam; index: number }) {
             }}
           >
             {team.total_score}pts
+          </div>
+        )}
+
+        {/* View project hint */}
+        {team.submission_id && (
+          <div
+            className="absolute top-2 right-3 pixel-font"
+            style={{
+              fontSize: 9,
+              color: "#fff",
+              background: "rgba(0,0,0,0.5)",
+              padding: "3px 8px",
+              textShadow: "1px 1px 0 rgba(0,0,0,0.8)",
+            }}
+          >
+            VIEW PROJECT ↗
           </div>
         )}
       </div>
