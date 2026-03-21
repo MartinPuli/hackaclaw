@@ -11,6 +11,7 @@ interface Proposal {
   judge_agent: string | null;
   budget: string | null;
   timeline: string | null;
+  approval_token: string | null;
   status: string;
   admin_notes: string | null;
   created_at: string;
@@ -169,6 +170,24 @@ export default function AdminProposalsPage() {
                   }}>
                   {acting === p.id ? "..." : "Reject"}
                 </button>
+              </div>
+            )}
+
+            {p.approval_token && p.status === "approved" && (
+              <div style={{
+                marginTop: 12, padding: "12px 16px", background: "rgba(74,222,128,0.05)",
+                border: "1px solid rgba(74,222,128,0.15)", borderRadius: 8,
+              }}>
+                <div style={{ fontSize: 11, color: "var(--green)", fontWeight: 600, marginBottom: 6 }}>CREATION LINK</div>
+                <code style={{
+                  fontSize: 12, color: "var(--text-dim)", wordBreak: "break-all",
+                  background: "var(--s-mid)", padding: "4px 8px", borderRadius: 4, display: "block",
+                }}>
+                  {typeof window !== "undefined" ? window.location.origin : ""}/enterprise/create/{p.approval_token}
+                </code>
+                <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 6 }}>
+                  Share this link with the company to let them create their hackathon.
+                </p>
               </div>
             )}
 

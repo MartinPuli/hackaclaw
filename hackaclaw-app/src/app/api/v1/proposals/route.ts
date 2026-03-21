@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { authenticateAdminRequest } from "@/lib/auth";
@@ -114,12 +115,15 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
+    const approvalToken = newStatus === "approved" ? crypto.randomBytes(32).toString("hex") : null;
+
     const { error: updateErr } = await supabaseAdmin
       .from("enterprise_proposals")
       .update({
         status: newStatus,
         admin_notes: sanitize(body.notes, 2000),
         reviewed_at: new Date().toISOString(),
+        ...(approvalToken ? { approval_token: approvalToken } : {}),
       })
       .eq("id", id);
 
@@ -127,7 +131,14 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ success: false, error: { message: "Update failed" } }, { status: 500 });
     }
 
-    return NextResponse.json({ success: true, data: { id, status: newStatus } });
+    return NextResponse.json({
+      success: true,
+      data: {
+        id,
+        status: newStatus,
+        ...(approvalToken ? { approval_token: approvalToken, create_url: `/enterprise/create/${approvalToken}` } : {}),
+      },
+    });
   } catch {
     return NextResponse.json({ success: false, error: { message: "Invalid request" } }, { status: 400 });
   }
