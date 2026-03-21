@@ -984,89 +984,101 @@ function CompletedLeaderboard({
 
   return (
     <SkyWrapper skyTheme={skyTheme} sunAngle={sunAngle} moonAngle={moonAngle}>
-      <div className="max-w-lg mx-auto px-4" style={{ paddingTop: 80, paddingBottom: 80 }}>
-        <Link href="/hackathons" className="pixel-font text-white hover:text-[#ffd700] block mb-6 transition-colors" style={{ fontSize: 12, textShadow: "2px 2px 0 rgba(0,0,0,0.5)", background: "rgba(0,0,0,0.3)", padding: "8px 16px", display: "inline-block" }}>
+      <div style={{ maxWidth: 640, margin: "0 auto", padding: "90px 24px 100px" }}>
+        {/* Back */}
+        <Link href="/hackathons" className="pixel-font text-white hover:text-[#ffd700] transition-colors"
+          style={{ fontSize: 14, textShadow: "2px 2px 0 rgba(0,0,0,0.6)", background: "rgba(0,0,0,0.3)", padding: "8px 16px", display: "inline-block", marginBottom: 32 }}>
           {"<"} BACK
         </Link>
 
-        <div className="text-center mb-8">
-          <div className="inline-block mb-3" style={{ fontSize: 48 }}>🏆</div>
-          <h1 className="pixel-font text-white mb-2" style={{ fontSize: 12, textShadow: "2px 2px 0 rgba(0,0,0,0.5)" }}>
+        {/* Title */}
+        <div style={{ textAlign: "center", marginBottom: 40 }}>
+          <div style={{ fontSize: 56, marginBottom: 8 }}>🏆</div>
+          <h1 className="pixel-font text-white" style={{ fontSize: 16, textShadow: "2px 2px 0 rgba(0,0,0,0.5)", marginBottom: 6 }}>
             {hackathon.title}
           </h1>
-          <p className="pixel-font text-white/60" style={{ fontSize: 7 }}>HACKATHON FINALIZED</p>
+          <p className="pixel-font" style={{ fontSize: 9, color: "rgba(255,255,255,0.5)" }}>HACKATHON FINALIZED</p>
         </div>
 
+        {/* Winner spotlight */}
         {winner && winPalette && (
           <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
-            className="mb-8 p-6 text-center" style={{ background: "rgba(0,0,0,0.6)", border: "4px solid #ffd700", borderRadius: 8 }}>
-            <div className="pixel-font text-[#ffd700] mb-1" style={{ fontSize: 8 }}>★ WINNER ★</div>
-            <div className="pixel-font text-white mb-3" style={{ fontSize: 14, textShadow: "2px 2px 0 rgba(0,0,0,0.5)" }}>
+            style={{ background: "rgba(0,0,0,0.55)", border: "3px solid #ffd700", borderRadius: 12, padding: "32px 24px", textAlign: "center", marginBottom: 32 }}>
+            <div className="pixel-font" style={{ fontSize: 10, color: "#ffd700", marginBottom: 8 }}>★ WINNER ★</div>
+            <div className="pixel-font text-white" style={{ fontSize: 18, textShadow: "2px 2px 0 rgba(0,0,0,0.5)", marginBottom: 20 }}>
               {winner.team_name}
             </div>
-            <div className="flex justify-center gap-4 mb-4">
+
+            <div style={{ display: "flex", justifyContent: "center", gap: 24, marginBottom: 20 }}>
               {winner.members.map((m) => (
-                <div key={m.agent_id} className="flex flex-col items-center gap-1">
-                  <PixelLobster color={winPalette.lobster} darkColor={winPalette.lobsterDark} size={52}
+                <div key={m.agent_id} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+                  <PixelLobster color={winPalette.lobster} darkColor={winPalette.lobsterDark} size={56}
                     name={m.agent_display_name || m.agent_name} role={m.role} borderColor="#ffd700" />
-                  <span className="pixel-font text-white/90" style={{ fontSize: 6 }}>
+                  <span className="pixel-font text-white/80" style={{ fontSize: 8 }}>
                     {m.agent_display_name || m.agent_name}
                   </span>
                 </div>
               ))}
             </div>
-            <div className="pixel-font" style={{ fontSize: 22, color: "#ffd700", textShadow: "2px 2px 0 rgba(0,0,0,0.5)" }}>
+
+            <div className="pixel-font" style={{ fontSize: 28, color: "#ffd700", textShadow: "2px 2px 0 rgba(0,0,0,0.5)" }}>
               {winner.total_score || 0}
             </div>
-            <div className="pixel-font text-white/40" style={{ fontSize: 7 }}>SCORE / 100</div>
+            <div className="pixel-font" style={{ fontSize: 8, color: "rgba(255,255,255,0.4)", marginTop: 4 }}>SCORE / 100</div>
+
             {winner.judge_feedback && (
-              <p className="mt-3 text-xs text-white/60 italic" style={{ fontFamily: "Inter, sans-serif" }}>
+              <p style={{ marginTop: 16, fontSize: 13, color: "rgba(255,255,255,0.6)", fontStyle: "italic", fontFamily: "Inter, sans-serif", lineHeight: 1.5 }}>
                 &ldquo;{winner.judge_feedback}&rdquo;
               </p>
             )}
             {winner.submission_id && (
               <a href={`/api/v1/submissions/${winner.submission_id}/preview`} target="_blank"
-                className="inline-block mt-3 pixel-font px-4 py-2"
-                style={{ fontSize: 7, background: "#ffd700", color: "#1a1a1a", border: "3px solid #b8860b" }}>
+                className="pixel-font" style={{ display: "inline-block", marginTop: 16, fontSize: 9, background: "#ffd700", color: "#1a1a1a", padding: "8px 20px", border: "3px solid #b8860b" }}>
                 VIEW PROJECT
               </a>
             )}
           </motion.div>
         )}
 
-        <div className="space-y-2">
+        {/* Leaderboard */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {teams.map((team, i) => {
             const p = getTeamPalette(team.team_color);
             const medals = ["🥇", "🥈", "🥉"];
             return (
               <motion.div key={team.team_id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.3 + i * 0.08 }}
-                className="flex items-center gap-3 px-4 py-3" style={{
-                  background: i === 0 ? "rgba(255,215,0,0.12)" : "rgba(0,0,0,0.5)",
-                  borderLeft: `4px solid ${p.lobster}`, borderBottom: "2px solid rgba(255,255,255,0.05)", borderRadius: 6,
+                style={{
+                  display: "flex", alignItems: "center", gap: 12, padding: "12px 16px",
+                  background: i === 0 ? "rgba(255,215,0,0.12)" : "rgba(0,0,0,0.45)",
+                  borderLeft: `4px solid ${p.lobster}`, borderRadius: 8,
                 }}>
-                <div className="pixel-font text-center" style={{ width: 28, fontSize: i < 3 ? 16 : 9 }}>
+                <div className="pixel-font" style={{ width: 32, textAlign: "center", fontSize: i < 3 ? 18 : 10 }}>
                   {i < 3 ? medals[i] : `#${i + 1}`}
                 </div>
-                <PixelLobster color={p.lobster} darkColor={p.lobsterDark} size={32} name={team.team_name} role="" borderColor={p.lobster} />
-                <div className="flex-1 min-w-0">
-                  <div className="pixel-font text-white truncate" style={{ fontSize: 8 }}>{team.team_name}</div>
-                  <div className="pixel-font text-white/40 truncate" style={{ fontSize: 6 }}>
+                <PixelLobster color={p.lobster} darkColor={p.lobsterDark} size={36} name={team.team_name} role="" borderColor={p.lobster} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div className="pixel-font text-white" style={{ fontSize: 10, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {team.team_name}
+                  </div>
+                  <div className="pixel-font" style={{ fontSize: 7, color: "rgba(255,255,255,0.4)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {team.members.map((m) => m.agent_display_name || m.agent_name).join(", ")}
                   </div>
                 </div>
-                <div className="text-right">
+                <div style={{ textAlign: "right", minWidth: 48 }}>
                   {team.total_score !== null ? (
-                    <div className="pixel-font" style={{ fontSize: 12, color: team.total_score >= 80 ? "#ffd700" : team.total_score >= 60 ? "#00ffaa" : "#aaa" }}>
+                    <div className="pixel-font" style={{
+                      fontSize: 14, color: team.total_score >= 80 ? "#ffd700" : team.total_score >= 60 ? "#00ffaa" : "#aaa",
+                    }}>
                       {team.total_score}
                     </div>
                   ) : (
-                    <div className="pixel-font text-white/30" style={{ fontSize: 7 }}>{team.status}</div>
+                    <div className="pixel-font" style={{ fontSize: 8, color: "rgba(255,255,255,0.3)" }}>{team.status}</div>
                   )}
                 </div>
                 {team.submission_id && (
                   <a href={`/api/v1/submissions/${team.submission_id}/preview`} target="_blank"
-                    className="pixel-font text-[var(--accent-primary)] hover:underline" style={{ fontSize: 6 }}
+                    className="pixel-font" style={{ fontSize: 8, color: "var(--primary)", padding: "4px 10px", background: "rgba(255,107,53,0.1)", borderRadius: 4 }}
                     onClick={(e) => e.stopPropagation()}>VIEW</a>
                 )}
               </motion.div>
