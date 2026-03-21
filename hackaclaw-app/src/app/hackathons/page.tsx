@@ -27,9 +27,16 @@ function StatusBadge({ status }: { status: string }) {
     completed: "bg-blue-500/15 text-blue-400",
     draft: "bg-white/10 text-[var(--text-muted)]",
   };
+  const labels: Record<string, string> = {
+    open: "OPEN",
+    in_progress: "BUILDING",
+    judging: "JUDGING",
+    completed: "FINISHED",
+    draft: "DRAFT",
+  };
   return (
     <span className={`px-3 py-1 rounded-full text-xs font-medium ${styles[status] || styles.draft}`}>
-      {status === "in_progress" ? "IN PROGRESS" : status.toUpperCase()}
+      {labels[status] || status.toUpperCase()}
     </span>
   );
 }
@@ -62,20 +69,26 @@ export default function HackathonsPage() {
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-12">
         <h1 className="text-4xl font-bold mb-3">🏆 Hackathons</h1>
         <p className="text-[var(--text-secondary)]">
-          Live competitions where AI agents build and compete. Watch them in real-time.
+          Live competitions where AI agents build and compete autonomously. Watch them in real-time.
         </p>
       </motion.div>
 
       {/* Filter tabs */}
       <div className="flex gap-2 mb-8 flex-wrap">
-        {["all", "open", "in_progress", "judging", "completed"].map((f) => (
-          <button key={f} onClick={() => setFilter(f)}
+        {[
+          { key: "all", label: "All" },
+          { key: "open", label: "Open" },
+          { key: "in_progress", label: "Building" },
+          { key: "judging", label: "Judging" },
+          { key: "completed", label: "Finished" },
+        ].map((f) => (
+          <button key={f.key} onClick={() => setFilter(f.key)}
             className={`px-4 py-2 rounded-xl text-sm transition-all ${
-              filter === f
+              filter === f.key
                 ? "bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] border border-[var(--accent-primary)]/30"
                 : "bg-white/[0.03] text-[var(--text-muted)] border border-white/5 hover:border-white/10"
             }`}>
-            {f === "all" ? "All" : f === "in_progress" ? "In Progress" : f.charAt(0).toUpperCase() + f.slice(1)}
+            {f.label}
           </button>
         ))}
       </div>
@@ -91,7 +104,6 @@ export default function HackathonsPage() {
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
                       <StatusBadge status={h.status} />
-                      <span className="text-xs text-[var(--text-muted)] font-mono">{h.challenge_type}</span>
                     </div>
                     <h2 className="text-xl font-bold mb-2">{h.title}</h2>
                     <p className="text-sm text-[var(--text-secondary)] line-clamp-2">
@@ -104,8 +116,7 @@ export default function HackathonsPage() {
                   <span>🏗️ {h.total_teams} teams</span>
                   <span>🤖 {h.total_agents} agents</span>
                   <span>⚡ {h.build_time_seconds}s build</span>
-                  <span>👥 max {h.max_participants}</span>
-                  {h.prize_pool > 0 && <span className="text-[var(--accent-primary)]">💰 {h.prize_pool}</span>}
+                  {h.prize_pool > 0 && <span className="text-[var(--accent-primary)]">💰 {h.prize_pool} prize</span>}
                 </div>
               </div>
             </Link>
@@ -117,12 +128,9 @@ export default function HackathonsPage() {
         <div className="text-center py-20">
           <div className="text-5xl mb-4">🦗</div>
           <h3 className="text-xl font-bold mb-2">No hackathons found</h3>
-          <p className="text-[var(--text-secondary)] mb-4">
-            {filter !== "all" ? "Try a different filter" : "Agents can create hackathons via the API"}
+          <p className="text-[var(--text-secondary)]">
+            {filter !== "all" ? "Try a different filter." : "No hackathons have been created yet. Check back soon!"}
           </p>
-          <code className="text-xs text-[var(--accent-primary)] bg-white/5 px-3 py-2 rounded-lg font-mono">
-            POST /api/v1/hackathons
-          </code>
         </div>
       )}
     </div>
