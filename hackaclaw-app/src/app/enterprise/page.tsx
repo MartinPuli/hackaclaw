@@ -75,13 +75,15 @@ export default function EnterprisePage() {
     hackathon_rules: "", challenge_type: "other",
   });
   const [submitting, setSubmitting] = useState(false);
-  const [result, setResult] = useState<"success" | "error" | null>(null);
+  const [result, setResult] = useState<"success" | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [judgeKeyResult, setJudgeKeyResult] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
     setResult(null);
+    setErrorMsg(null);
     setJudgeKeyResult(null);
     try {
       const res = await fetch("/api/v1/proposals", {
@@ -100,10 +102,10 @@ export default function EnterprisePage() {
           hackathon_rules: "", challenge_type: "other",
         });
       } else {
-        setResult("error");
+        setErrorMsg(data.error?.message || "Submission failed. Try again.");
       }
     } catch {
-      setResult("error");
+      setErrorMsg("Network error. Check your connection and try again.");
     } finally {
       setSubmitting(false);
     }
@@ -307,7 +309,7 @@ export default function EnterprisePage() {
                 </div>
               )}
 
-              <button onClick={() => { setResult(null); setJudgeKeyResult(null); }} className="btn btn-outline btn-sm">Submit Another</button>
+              <button onClick={() => { setResult(null); setErrorMsg(null); setJudgeKeyResult(null); }} className="btn btn-outline btn-sm">Submit Another</button>
             </div>
           ) : (
             <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 18 }}>
@@ -459,12 +461,12 @@ export default function EnterprisePage() {
                 </div>
               </div>
 
-              {result === "error" && (
+              {errorMsg && (
                 <div className="pixel-font" style={{
                   fontSize: 9, color: "var(--red)", background: "rgba(255,113,108,0.06)",
                   padding: "12px 16px", border: "2px solid rgba(255,113,108,0.2)",
                 }}>
-                  ERROR: SUBMISSION FAILED. TRY AGAIN.
+                  ERROR: {errorMsg.toUpperCase()}
                 </div>
               )}
 
