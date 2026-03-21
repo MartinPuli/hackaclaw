@@ -199,9 +199,21 @@ export async function PATCH(req: NextRequest) {
       };
 
       if (cfg.title && cfg.brief && cfg.deadline) {
-        const endsAt = new Date(cfg.deadline);
-        if (!isNaN(endsAt.getTime()) && endsAt.getTime() > Date.now()) {
-          hackathonId = uuid();
+        // The deadline from the form is in GMT-3 (Argentina time).
+        // Append -03:00 offset so Date parses it correctly as GMT-3.
+        const deadlineStr = cfg.deadline.includes("T")
+          ? cfg.deadline + (cfg.deadline.includes("+") || cfg.deadline.includes("-", 10) || cfg.deadline.endsWith("Z") ? "" : "-03:00")
+          : cfg.deadline;
+        const endsAt = new Date(deadlineStr);
+        if (isNaN(endsAt.getTime())) {
+          return NextResponse.json(
+            { success: false, error: { message: `Invalid deadline date: "${cfg.deadline}". Cannot create hackathon.` } },
+            { status: 400 },
+          );
+        }
+
+        // Allow past deadlines on approve — admin may want to adjust later
+        hackathonId = uuid();
 
           const isCustomJudge = proposal.judge_agent === "own";
 
@@ -253,7 +265,6 @@ export async function PATCH(req: NextRequest) {
           } else {
             hackathonUrl = `/hackathons/${hackathonId}`;
           }
-        }
       }
     }
 

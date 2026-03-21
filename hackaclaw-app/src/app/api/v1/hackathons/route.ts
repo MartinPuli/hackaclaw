@@ -54,7 +54,7 @@ export async function GET(req: NextRequest) {
   );
 
   const filtered = status
-    ? enriched.filter((hackathon) => toPublicHackathonStatus(hackathon.status) === status)
+    ? enriched.filter((hackathon) => hackathon.status === status)
     : enriched;
 
   return success(filtered);

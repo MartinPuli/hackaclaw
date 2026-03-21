@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { formatTimeGMT3 } from "@/lib/date-utils";
 
 /* ─── Pixel Art Components ─── */
 
@@ -305,7 +306,7 @@ export default function Home() {
                         transition={{ delay: i * 0.08 }}
                         style={{ padding: "10px 0", borderBottom: i < 5 ? "1px solid rgba(89,65,57,0.08)" : "none", display: "flex", alignItems: "center", gap: 10 }}>
                         <span className="pixel-font" style={{ fontSize: 9, color: "var(--green)", width: 40 }}>
-                          {new Date(ev.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                          {formatTimeGMT3(ev.created_at)}
                         </span>
                         <span className="pixel-font" style={{ fontSize: 9, color: "var(--primary)", minWidth: 60 }}>
                           {EVENT_LABELS[ev.event_type] || ev.event_type}

@@ -8,9 +8,9 @@ type RouteParams = { params: Promise<{ id: string }> };
 /**
  * POST /api/v1/hackathons/:id/check-deadline
  *
- * Called by the frontend when the countdown reaches 0.
+ * Called by the frontend when the countdown reaches 0, or periodically.
  * If the hackathon deadline has truly passed:
- *   1. Sets status → "judging"
+ *   1. Atomically sets status → "judging" (prevents double-trigger)
  *   2. Runs the AI judge
  *   3. Sets status → "completed" (finalized)
  *
@@ -27,9 +27,14 @@ export async function POST(_req: NextRequest, { params }: RouteParams) {
 
   if (fetchErr || !hackathon) return notFound("Hackathon");
 
-  // Already completed/judging — return current state
-  if (hackathon.status === "completed" || hackathon.status === "judging") {
-    return success({ status: hackathon.status === "completed" ? "finalized" : "judging", already: true });
+  // Already completed — return finalized
+  if (hackathon.status === "completed") {
+    return success({ status: "finalized", already: true });
+  }
+
+  // Already being judged — return judging so frontend can poll
+  if (hackathon.status === "judging") {
+    return success({ status: "judging", already: true });
   }
 
   // Check if deadline actually passed
@@ -43,13 +48,36 @@ export async function POST(_req: NextRequest, { params }: RouteParams) {
     return success({ status: "open", remaining_seconds: remaining });
   }
 
-  // Deadline passed — close and judge
+  // Deadline passed — atomically claim the judging slot to prevent double-trigger.
+  // Only update if status is still "open" (another request may have gotten here first).
+  const { data: claimed, error: claimErr } = await supabaseAdmin
+    .from("hackathons")
+    .update({ status: "judging" })
+    .eq("id", id)
+    .eq("status", "open")
+    .select("id")
+    .single();
+
+  if (claimErr || !claimed) {
+    // Another process already claimed it — return judging status
+    return success({ status: "judging", already: true });
+  }
+
+  // We claimed it — now run the judge
   try {
     await judgeHackathon(id);
     return success({ status: "finalized", judged: true });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error("Auto-judge error:", msg);
-    return error("Failed to judge hackathon", 500);
+
+    // Revert to open so it can be retried (by cron or another request)
+    await supabaseAdmin
+      .from("hackathons")
+      .update({ status: "open" })
+      .eq("id", id)
+      .eq("status", "judging");
+
+    return error("Failed to judge hackathon: " + msg, 500);
   }
 }

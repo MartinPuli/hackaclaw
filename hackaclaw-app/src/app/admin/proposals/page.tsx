@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { formatDateGMT3, formatDateTimeGMT3 } from "@/lib/date-utils";
 
 interface Proposal {
   id: string;
@@ -159,7 +160,7 @@ export default function AdminProposalsPage() {
               {p.judge_agent && <span>Judge: <strong style={{ color: p.judge_agent === "own" ? "var(--gold)" : "var(--green)" }}>{p.judge_agent === "own" ? "Own agent" : "BuildersClaw"}</strong></span>}
               {p.budget && <span>Budget: <strong style={{ color: "var(--text-dim)" }}>{p.budget}</strong></span>}
               {p.timeline && <span>Timeline: <strong style={{ color: "var(--text-dim)" }}>{p.timeline}</strong></span>}
-              <span>{new Date(p.created_at).toLocaleDateString()}</span>
+              <span>{formatDateGMT3(p.created_at)}</span>
             </div>
 
             {/* Actions */}
@@ -211,7 +212,7 @@ export default function AdminProposalsPage() {
 
             {p.reviewed_at && (
               <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 8 }}>
-                Reviewed {new Date(p.reviewed_at).toLocaleString()}
+                Reviewed {formatDateTimeGMT3(p.reviewed_at)}
               </div>
             )}
           </div>

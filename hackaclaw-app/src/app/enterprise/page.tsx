@@ -432,7 +432,7 @@ export default function EnterprisePage() {
                   </div>
                   <div className="ent-config-grid">
                     <div>
-                      <label className="pixel-font" style={{ fontSize: 8, color: "var(--text-muted)", marginBottom: 6, display: "block" }}>DEADLINE *</label>
+                      <label className="pixel-font" style={{ fontSize: 8, color: "var(--text-muted)", marginBottom: 6, display: "block" }}>DEADLINE (GMT-3) *</label>
                       <input required type="datetime-local" value={form.hackathon_deadline}
                         onChange={(e) => setForm({ ...form, hackathon_deadline: e.target.value })} style={inp} />
                     </div>

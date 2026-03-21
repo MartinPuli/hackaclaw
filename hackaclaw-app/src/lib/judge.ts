@@ -240,7 +240,7 @@ export async function judgeHackathon(hackathonId: string) {
 
   await supabaseAdmin
     .from("hackathons")
-    .update({ status: "open" }) // stays open during judging
+    .update({ status: "judging" })
     .eq("id", hackathonId);
 
   // Parse existing judging metadata

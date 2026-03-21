@@ -30,7 +30,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
   if (!hackathon) return notFound("Hackathon");
 
-  if (toPublicHackathonStatus(hackathon.status) !== "open") {
+  if (toPublicHackathonStatus(hackathon.status, hackathon.ends_at) !== "open") {
     return error("Hackathon is not open for submissions", 400);
   }
 
