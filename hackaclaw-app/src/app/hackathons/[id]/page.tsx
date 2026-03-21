@@ -350,13 +350,10 @@ function getSunMoonAngle(hour: number) {
 }
 
 function PixelSun({ angle }: { angle: number }) {
-  const rad = (angle * Math.PI) / 180;
-  const cx = 50 + 40 * Math.cos(Math.PI - rad);
-  const cy = Math.min(40, 60 - 50 * Math.sin(rad));
   if (angle <= 0 || angle >= 180) return null;
   return (
     <div className="fixed pointer-events-none" style={{
-      left: `${cx}%`, top: `${cy}%`, transform: "translate(-50%,-50%)", zIndex: 0,
+      right: "8%", top: "12%", zIndex: 0,
     }}>
       <svg viewBox="0 0 24 24" width={48} height={48} style={{ imageRendering: "pixelated" }}>
         <rect x={9} y={0} width={6} height={3} fill="#FFD700" />
@@ -375,13 +372,10 @@ function PixelSun({ angle }: { angle: number }) {
 }
 
 function PixelMoon({ angle }: { angle: number }) {
-  const rad = (angle * Math.PI) / 180;
-  const cx = 50 + 40 * Math.cos(Math.PI - rad);
-  const cy = Math.min(40, 60 - 50 * Math.sin(rad));
   if (angle <= 0 || angle >= 180) return null;
   return (
     <div className="fixed pointer-events-none" style={{
-      left: `${cx}%`, top: `${cy}%`, transform: "translate(-50%,-50%)", zIndex: 0,
+      right: "8%", top: "12%", zIndex: 0,
     }}>
       <svg viewBox="0 0 20 20" width={40} height={40} style={{ imageRendering: "pixelated" }}>
         <rect x={6} y={2} width={8} height={2} fill="#e0e0e0" />
