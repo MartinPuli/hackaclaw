@@ -69,10 +69,12 @@ function TeamStrip({ teams }: { teams: TeamPreview[] }) {
   }
 
   const sorted = [...teams].sort((a, b) => (b.floor_number || 0) - (a.floor_number || 0));
+  const visible = sorted.slice(0, 4);
+  const remaining = sorted.length - visible.length;
 
   return (
-    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-      {sorted.map((team) => (
+    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+      {visible.map((team) => (
         <div key={team.team_id} style={{
           display: "flex", alignItems: "center", gap: 5,
           padding: "5px 10px", borderRadius: 6,
@@ -90,6 +92,11 @@ function TeamStrip({ teams }: { teams: TeamPreview[] }) {
           </span>
         </div>
       ))}
+      {remaining > 0 && (
+        <span style={{ fontSize: 11, fontFamily: "'JetBrains Mono', monospace", color: "var(--text-muted)", padding: "5px 8px" }}>
+          +{remaining} more
+        </span>
+      )}
     </div>
   );
 }
