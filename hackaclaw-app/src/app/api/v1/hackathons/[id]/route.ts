@@ -1,62 +1,82 @@
 import { NextRequest } from "next/server";
-import { getDb } from "@/lib/db";
+import { supabaseAdmin } from "@/lib/supabase";
 import { authenticateRequest } from "@/lib/auth";
 import { success, error, unauthorized, notFound } from "@/lib/responses";
 
 type RouteParams = { params: Promise<{ id: string }> };
 
 /**
- * GET /api/v1/hackathons/:id
- * Get full hackathon details with teams and members.
+ * GET /api/v1/hackathons/:id — Get full hackathon details with teams and members.
  */
 export async function GET(req: NextRequest, { params }: RouteParams) {
   const { id } = await params;
-  const db = getDb();
 
-  const hackathon = db.prepare("SELECT * FROM hackathons WHERE id = ?").get(id);
+  const { data: hackathon } = await supabaseAdmin
+    .from("hackathons")
+    .select("*")
+    .eq("id", id)
+    .single();
+
   if (!hackathon) return notFound("Hackathon");
 
-  // Get teams with members
-  const teams = db.prepare(
-    "SELECT * FROM teams WHERE hackathon_id = ? ORDER BY floor_number ASC, created_at ASC"
-  ).all(id) as Record<string, unknown>[];
+  // Get teams
+  const { data: teams } = await supabaseAdmin
+    .from("teams")
+    .select("*")
+    .eq("hackathon_id", id)
+    .order("floor_number", { ascending: true });
 
-  const enrichedTeams = teams.map((team) => {
-    const members = db.prepare(
-      `SELECT tm.*, a.name as agent_name, a.display_name as agent_display_name, a.avatar_url as agent_avatar_url
-       FROM team_members tm
-       JOIN agents a ON tm.agent_id = a.id
-       WHERE tm.team_id = ?
-       ORDER BY tm.role ASC`
-    ).all(team.id);
+  // Enrich teams with members
+  const enrichedTeams = await Promise.all(
+    (teams || []).map(async (team) => {
+      const { data: members } = await supabaseAdmin
+        .from("team_members")
+        .select("*, agents(name, display_name, avatar_url)")
+        .eq("team_id", team.id)
+        .order("role", { ascending: true });
 
-    return { ...team, members };
-  });
+      const flatMembers = (members || []).map((m: Record<string, unknown>) => {
+        const agent = m.agents as Record<string, unknown> | null;
+        return {
+          ...m,
+          agents: undefined,
+          agent_name: agent?.name,
+          agent_display_name: agent?.display_name,
+          agent_avatar_url: agent?.avatar_url,
+        };
+      });
+
+      return { ...team, members: flatMembers };
+    })
+  );
 
   const totalAgents = enrichedTeams.reduce(
-    (sum, t) => sum + (t.members as unknown[]).length, 0
+    (sum, t) => sum + t.members.length, 0
   );
 
   return success({
-    ...hackathon as Record<string, unknown>,
+    ...hackathon,
     teams: enrichedTeams,
-    total_teams: teams.length,
+    total_teams: (teams || []).length,
     total_agents: totalAgents,
   });
 }
 
 /**
- * PATCH /api/v1/hackathons/:id
- * Update hackathon (only by creator). Requires auth.
+ * PATCH /api/v1/hackathons/:id — Update hackathon (only by creator).
  */
 export async function PATCH(req: NextRequest, { params }: RouteParams) {
-  const agent = authenticateRequest(req);
+  const agent = await authenticateRequest(req);
   if (!agent) return unauthorized();
 
   const { id } = await params;
-  const db = getDb();
 
-  const hackathon = db.prepare("SELECT * FROM hackathons WHERE id = ?").get(id) as Record<string, unknown> | undefined;
+  const { data: hackathon } = await supabaseAdmin
+    .from("hackathons")
+    .select("*")
+    .eq("id", id)
+    .single();
+
   if (!hackathon) return notFound("Hackathon");
   if (hackathon.created_by !== agent.id) {
     return error("Only the hackathon creator can update it", 403);
@@ -64,22 +84,19 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
 
   const body = await req.json();
   const allowed = ["title", "description", "brief", "rules", "status", "starts_at", "ends_at", "entry_fee", "prize_pool", "max_participants"];
-  const updates: string[] = [];
-  const values: unknown[] = [];
+  const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
 
   for (const key of allowed) {
-    if (body[key] !== undefined) {
-      updates.push(`${key} = ?`);
-      values.push(body[key]);
-    }
+    if (body[key] !== undefined) updates[key] = body[key];
   }
 
-  if (updates.length === 0) return error("No fields to update");
+  const { data: updated, error: updateErr } = await supabaseAdmin
+    .from("hackathons")
+    .update(updates)
+    .eq("id", id)
+    .select("*")
+    .single();
 
-  updates.push("updated_at = datetime('now')");
-  values.push(id);
-
-  db.prepare(`UPDATE hackathons SET ${updates.join(", ")} WHERE id = ?`).run(...values);
-  const updated = db.prepare("SELECT * FROM hackathons WHERE id = ?").get(id);
+  if (updateErr) return error(updateErr.message, 500);
   return success(updated);
 }

@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import { getDb } from "./db";
+import { supabaseAdmin } from "./supabase";
 import type { Agent } from "./types";
 import { NextRequest } from "next/server";
 
@@ -36,29 +36,35 @@ export function extractToken(authHeader: string | null): string | null {
 }
 
 /** Authenticate request, return agent or null */
-export function authenticateRequest(req: NextRequest): Agent | null {
+export async function authenticateRequest(req: NextRequest): Promise<Agent | null> {
   const authHeader = req.headers.get("authorization");
   const token = extractToken(authHeader);
 
   if (!token || !validateApiKey(token)) return null;
 
   const keyHash = hashToken(token);
-  const db = getDb();
-  const agent = db
-    .prepare("SELECT * FROM agents WHERE api_key_hash = ? AND status = 'active'")
-    .get(keyHash) as Agent | undefined;
 
-  if (agent) {
-    // Update last_active
-    db.prepare("UPDATE agents SET last_active = datetime('now') WHERE id = ?").run(agent.id);
-  }
+  const { data: agent, error } = await supabaseAdmin
+    .from("agents")
+    .select("*")
+    .eq("api_key_hash", keyHash)
+    .eq("status", "active")
+    .single();
 
-  return agent || null;
+  if (error || !agent) return null;
+
+  // Update last_active
+  await supabaseAdmin
+    .from("agents")
+    .update({ last_active: new Date().toISOString() })
+    .eq("id", agent.id);
+
+  return agent as Agent;
 }
 
 /** Require auth — returns agent or throws error response */
-export function requireAuth(req: NextRequest): Agent {
-  const agent = authenticateRequest(req);
+export async function requireAuth(req: NextRequest): Promise<Agent> {
+  const agent = await authenticateRequest(req);
   if (!agent) {
     throw new AuthError("Authentication required. Use 'Authorization: Bearer hackaclaw_...' header.");
   }

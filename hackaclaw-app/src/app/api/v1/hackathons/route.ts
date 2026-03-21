@@ -1,16 +1,15 @@
 import { NextRequest } from "next/server";
-import { getDb } from "@/lib/db";
+import { supabaseAdmin } from "@/lib/supabase";
 import { authenticateRequest } from "@/lib/auth";
 import { success, created, error, unauthorized } from "@/lib/responses";
 import { getPlatformFeePct } from "@/lib/responses";
 import { v4 as uuid } from "uuid";
 
 /**
- * POST /api/v1/hackathons
- * Create a new hackathon. Requires auth.
+ * POST /api/v1/hackathons — Create a new hackathon. Requires auth.
  */
 export async function POST(req: NextRequest) {
-  const agent = authenticateRequest(req);
+  const agent = await authenticateRequest(req);
   if (!agent) return unauthorized();
 
   try {
@@ -32,22 +31,22 @@ export async function POST(req: NextRequest) {
 
     const id = uuid();
     const platformFee = getPlatformFeePct();
-    const db = getDb();
 
-    db.prepare(
-      `INSERT INTO hackathons (id, title, description, brief, rules, entry_type, entry_fee, prize_pool, platform_fee_pct, max_participants, team_size_min, team_size_max, build_time_seconds, challenge_type, status, created_by, starts_at, ends_at, judging_criteria)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?, ?, ?)`
-    ).run(
-      id, title, description || null, brief, rules || null,
-      entry_type, entry_fee, prize_pool, platformFee,
-      max_participants, team_size_min, team_size_max,
-      build_time_seconds, challenge_type,
-      agent.id,
-      starts_at || null, ends_at || null,
-      judging_criteria ? JSON.stringify(judging_criteria) : null
-    );
+    const { data: hackathon, error: insertErr } = await supabaseAdmin
+      .from("hackathons")
+      .insert({
+        id, title, description: description || null, brief, rules: rules || null,
+        entry_type, entry_fee, prize_pool, platform_fee_pct: platformFee,
+        max_participants, team_size_min, team_size_max,
+        build_time_seconds, challenge_type, status: "open",
+        created_by: agent.id,
+        starts_at: starts_at || null, ends_at: ends_at || null,
+        judging_criteria: judging_criteria || null,
+      })
+      .select("*")
+      .single();
 
-    const hackathon = db.prepare("SELECT * FROM hackathons WHERE id = ?").get(id);
+    if (insertErr) return error(insertErr.message, 500);
     return created(hackathon);
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Internal error";
@@ -56,44 +55,39 @@ export async function POST(req: NextRequest) {
 }
 
 /**
- * GET /api/v1/hackathons
- * List hackathons. Optional filters: ?status=open&challenge_type=landing_page
+ * GET /api/v1/hackathons — List hackathons.
  */
 export async function GET(req: NextRequest) {
-  const db = getDb();
   const status = req.nextUrl.searchParams.get("status");
   const challengeType = req.nextUrl.searchParams.get("challenge_type");
 
-  let query = "SELECT * FROM hackathons WHERE 1=1";
-  const params: string[] = [];
+  let query = supabaseAdmin.from("hackathons").select("*");
 
-  if (status) {
-    query += " AND status = ?";
-    params.push(status);
-  }
-  if (challengeType) {
-    query += " AND challenge_type = ?";
-    params.push(challengeType);
-  }
+  if (status) query = query.eq("status", status);
+  if (challengeType) query = query.eq("challenge_type", challengeType);
 
-  query += " ORDER BY created_at DESC";
+  const { data: hackathons, error: queryErr } = await query.order("created_at", { ascending: false });
 
-  const hackathons = db.prepare(query).all(...params);
+  if (queryErr) return error(queryErr.message, 500);
 
   // Enrich with team/agent counts
-  const enriched = hackathons.map((h: Record<string, unknown>) => {
-    const teamCount = db.prepare(
-      "SELECT COUNT(*) as count FROM teams WHERE hackathon_id = ?"
-    ).get(h.id) as { count: number };
+  const enriched = await Promise.all(
+    (hackathons || []).map(async (h) => {
+      const { count: teamCount } = await supabaseAdmin
+        .from("teams")
+        .select("*", { count: "exact", head: true })
+        .eq("hackathon_id", h.id);
 
-    const agentCount = db.prepare(
-      `SELECT COUNT(DISTINCT tm.agent_id) as count
-       FROM team_members tm JOIN teams t ON tm.team_id = t.id
-       WHERE t.hackathon_id = ?`
-    ).get(h.id) as { count: number };
+      const { data: members } = await supabaseAdmin
+        .from("team_members")
+        .select("agent_id, teams!inner(hackathon_id)")
+        .eq("teams.hackathon_id", h.id);
 
-    return { ...h, total_teams: teamCount.count, total_agents: agentCount.count };
-  });
+      const uniqueAgents = new Set((members || []).map((m: Record<string, unknown>) => m.agent_id));
+
+      return { ...h, total_teams: teamCount || 0, total_agents: uniqueAgents.size };
+    })
+  );
 
   return success(enriched);
 }
