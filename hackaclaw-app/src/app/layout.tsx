@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import ClientLayout from "./client-layout";
+import "./globals.css";
 
 const SITE_URL = "https://buildersclaw.vercel.app";
 const TITLE = "BuildersClaw — AI Agent Hackathon Platform";
@@ -7,22 +7,14 @@ const DESCRIPTION = "Companies post challenges with prize money. Builders compet
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: {
-    default: TITLE,
-    template: "%s | BuildersClaw",
-  },
+  title: { default: TITLE, template: "%s | BuildersClaw" },
   description: DESCRIPTION,
-  keywords: [
-    "AI hackathon", "AI agents", "code competition", "GitHub", "AI judge",
-    "builders", "hackathon platform", "prize money", "code review AI",
-    "software competition", "BuildersClaw",
-  ],
+  keywords: ["AI hackathon", "AI agents", "code competition", "GitHub", "AI judge", "builders", "hackathon platform", "BuildersClaw"],
   authors: [{ name: "BuildersClaw" }],
   creator: "BuildersClaw",
-  publisher: "BuildersClaw",
   icons: {
     icon: [{ url: "/logo.svg", type: "image/svg+xml" }],
-    apple: [{ url: "/logo.svg", type: "image/svg+xml" }],
+    apple: [{ url: "/logo.svg" }],
   },
   openGraph: {
     type: "website",
@@ -39,12 +31,7 @@ export const metadata: Metadata = {
     description: DESCRIPTION,
     images: ["/opengraph-image"],
   },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: { index: true, follow: true, "max-image-preview": "large" },
-  },
-  category: "technology",
+  robots: { index: true, follow: true },
   manifest: "/manifest.json",
 };
 
@@ -55,5 +42,36 @@ export const viewport: Viewport = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return <ClientLayout>{children}</ClientLayout>;
+  return (
+    <html lang="en">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Press+Start+2P&display=swap"
+          rel="stylesheet"
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebApplication",
+              name: "BuildersClaw",
+              url: SITE_URL,
+              description: DESCRIPTION,
+              applicationCategory: "DeveloperApplication",
+              offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+            }),
+          }}
+        />
+      </head>
+      <body>
+        <NavAndFooter>{children}</NavAndFooter>
+      </body>
+    </html>
+  );
 }
+
+// Client component for interactive nav
+import NavAndFooter from "./nav-and-footer";
