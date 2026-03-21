@@ -590,51 +590,24 @@ function PixelRooftop() {
           <rect x={9} y={5} width={2} height={2} fill="#ff5252" />
         </svg>
       </div>
-      {/* Roof — triangle via CSS, window via separate centered div */}
-      <div className="relative" style={{ width: "100%" }}>
-        {/* Triangle roof */}
-        <div style={{
-          width: 0, height: 0,
-          borderLeft: "50vw solid transparent",
-          borderRight: "50vw solid transparent",
-          borderBottom: "120px solid #795548",
-          maxWidth: "100%",
-          margin: "0 auto",
-          position: "relative",
-        }} />
-        {/* Roof overlay for shading */}
-        <div className="absolute inset-0" style={{
-          background: "linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.15) 100%)",
-          clipPath: "polygon(50% 0%, 0% 100%, 100% 100%)",
-        }} />
-        {/* Tile lines that follow the slope */}
-        <svg className="absolute inset-0" viewBox="0 0 200 120" preserveAspectRatio="none" style={{ width: "100%", height: "100%" }}>
-          {/* Left slope lines */}
-          <line x1={75} y1={30} x2={25} y2={90} stroke="#5d4037" strokeWidth={0.8} opacity={0.5} />
-          <line x1={80} y1={30} x2={35} y2={90} stroke="#5d4037" strokeWidth={0.8} opacity={0.5} />
-          {/* Right slope lines */}
-          <line x1={125} y1={30} x2={175} y2={90} stroke="#5d4037" strokeWidth={0.8} opacity={0.5} />
-          <line x1={120} y1={30} x2={165} y2={90} stroke="#5d4037" strokeWidth={0.8} opacity={0.5} />
-          {/* Horizontal rows */}
-          <line x1={35} y1={48} x2={165} y2={48} stroke="#6d4c41" strokeWidth={1} opacity={0.6} />
-          <line x1={18} y1={72} x2={182} y2={72} stroke="#6d4c41" strokeWidth={1} opacity={0.6} />
-          <line x1={8} y1={96} x2={192} y2={96} stroke="#6d4c41" strokeWidth={1} opacity={0.6} />
-        </svg>
-        {/* Round window — positioned absolutely so not affected by SVG stretch */}
+      {/* Roof — triangle using clipPath (respects container width) */}
+      <div className="relative" style={{ height: 100, background: "#795548", clipPath: "polygon(50% 0%, 0% 100%, 100% 100%)" }}>
+        {/* Shading */}
+        <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, #8d6e63 0%, #795548 40%, #6d4c41 100%)" }} />
+        {/* Brick pattern */}
+        <div className="absolute inset-0" style={{ background: "repeating-linear-gradient(0deg, transparent 0px, transparent 18px, rgba(0,0,0,0.1) 18px, rgba(0,0,0,0.1) 20px)" }} />
+        {/* Round window */}
         <div className="absolute" style={{
-          left: "50%", top: "55%",
-          transform: "translate(-50%,-50%)",
-          width: 40, height: 40,
-          borderRadius: "50%",
-          background: "#3e2723",
+          left: "50%", top: "55%", transform: "translate(-50%,-50%)",
+          width: 36, height: 36, borderRadius: "50%",
+          background: "#3e2723", border: "3px solid #4e342e",
           display: "flex", alignItems: "center", justifyContent: "center",
         }}>
           <div style={{
-            width: 32, height: 32, borderRadius: "50%",
+            width: 28, height: 28, borderRadius: "50%",
             background: "radial-gradient(circle, #81d4fa 0%, #4fc3f7 60%, #29b6f6 100%)",
             position: "relative", overflow: "hidden",
           }}>
-            {/* Cross muntins */}
             <div style={{ position: "absolute", left: "50%", top: 0, width: 2, height: "100%", background: "#5d4037", transform: "translateX(-50%)" }} />
             <div style={{ position: "absolute", top: "50%", left: 0, width: "100%", height: 2, background: "#5d4037", transform: "translateY(-50%)" }} />
           </div>
