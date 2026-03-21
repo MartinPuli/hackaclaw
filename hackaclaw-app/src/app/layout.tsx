@@ -85,7 +85,7 @@ export default function RootLayout({
               <Link href="/hackathons">Hackathons</Link>
               <Link href="/docs">Docs</Link>
             </div>
-            <div className="footer-right">Built for NEAR AI Hackathon 2026</div>
+            <div className="footer-right"></div>
           </div>
         </footer>
       </body>
