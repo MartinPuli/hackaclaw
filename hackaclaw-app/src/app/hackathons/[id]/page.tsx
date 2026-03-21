@@ -662,6 +662,14 @@ function BuildingFloor({ team, index }: { team: RankedTeam; index: number }) {
       {/* Floor content — solid colored walls */}
       <div
         className="relative"
+        role={team.submission_id ? "link" : undefined}
+        tabIndex={team.submission_id ? 0 : undefined}
+        onClick={() => {
+          if (team.submission_id) window.open(`/api/v1/submissions/${team.submission_id}/preview`, "_blank", "noopener,noreferrer");
+        }}
+        onKeyDown={(e) => {
+          if (team.submission_id && (e.key === "Enter" || e.key === " ")) window.open(`/api/v1/submissions/${team.submission_id}/preview`, "_blank", "noopener,noreferrer");
+        }}
         style={{
           background: `repeating-linear-gradient(
             0deg,
@@ -677,7 +685,11 @@ function BuildingFloor({ team, index }: { team: RankedTeam; index: number }) {
           borderLeft: `16px solid ${wallDark}`,
           borderRight: `16px solid ${wallDark}`,
           imageRendering: "pixelated" as CSSProperties["imageRendering"],
+          cursor: team.submission_id ? "pointer" : "default",
+          transition: "filter 0.15s ease",
         }}
+        onMouseEnter={(e) => { if (team.submission_id) (e.currentTarget as HTMLDivElement).style.filter = "brightness(1.15)"; }}
+        onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.filter = "brightness(1)"; }}
       >
         {/* Team name label */}
         <div
@@ -730,6 +742,22 @@ function BuildingFloor({ team, index }: { team: RankedTeam; index: number }) {
             }}
           >
             {team.total_score}pts
+          </div>
+        )}
+
+        {/* View project hint */}
+        {team.submission_id && (
+          <div
+            className="absolute top-2 right-3 pixel-font"
+            style={{
+              fontSize: 9,
+              color: "#fff",
+              background: "rgba(0,0,0,0.5)",
+              padding: "3px 8px",
+              textShadow: "1px 1px 0 rgba(0,0,0,0.8)",
+            }}
+          >
+            VIEW PROJECT ↗
           </div>
         )}
       </div>
@@ -1032,7 +1060,7 @@ function CompletedLeaderboard({
               </p>
             )}
             {winner.submission_id && (
-              <a href={`/api/v1/submissions/${winner.submission_id}/preview`} target="_blank"
+              <a href={`/api/v1/submissions/${winner.submission_id}/preview`} target="_blank" rel="noopener noreferrer"
                 className="pixel-font" style={{ display: "inline-block", marginTop: 16, fontSize: 9, background: "#ffd700", color: "#1a1a1a", padding: "8px 20px", border: "3px solid #b8860b" }}>
                 VIEW PROJECT
               </a>
@@ -1061,7 +1089,7 @@ function CompletedLeaderboard({
                   <div className="pixel-font text-white" style={{ fontSize: 10, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {team.team_name}
                   </div>
-                  <div className="pixel-font" style={{ fontSize: 7, color: "rgba(255,255,255,0.4)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <div className="pixel-font" style={{ fontSize: 9, color: "rgba(255,255,255,0.4)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {team.members.map((m) => m.agent_display_name || m.agent_name).join(", ")}
                   </div>
                 </div>
@@ -1077,7 +1105,7 @@ function CompletedLeaderboard({
                   )}
                 </div>
                 {team.submission_id && (
-                  <a href={`/api/v1/submissions/${team.submission_id}/preview`} target="_blank"
+                  <a href={`/api/v1/submissions/${team.submission_id}/preview`} target="_blank" rel="noopener noreferrer"
                     className="pixel-font" style={{ fontSize: 8, color: "var(--primary)", padding: "4px 10px", background: "rgba(255,107,53,0.1)", borderRadius: 4 }}
                     onClick={(e) => e.stopPropagation()}>VIEW</a>
                 )}
@@ -1285,7 +1313,7 @@ export default function HackathonDetailPage({ params }: { params: Promise<{ id: 
                 teamsCount={teams.length}
                 agentsCount={totalAgents}
               />
-              <p className="pixel-font text-center text-white/60 mt-1" style={{ fontSize: 7, textShadow: "1px 1px 0 rgba(0,0,0,0.5)" }}>
+              <p className="pixel-font text-center text-white/60 mt-1" style={{ fontSize: 9, textShadow: "1px 1px 0 rgba(0,0,0,0.5)" }}>
                 TAP BADGE FOR INFO
               </p>
             </div>
@@ -1320,7 +1348,7 @@ export default function HackathonDetailPage({ params }: { params: Promise<{ id: 
                 teamsCount={0}
                 agentsCount={0}
               />
-              <p className="pixel-font" style={{ fontSize: 7, color: "rgba(255,255,255,0.5)" }}>TAP BADGE FOR INFO</p>
+              <p className="pixel-font" style={{ fontSize: 9, color: "rgba(255,255,255,0.5)" }}>TAP BADGE FOR INFO</p>
               <div style={{
                 background: "rgba(0,0,0,0.45)", padding: "28px 32px", textAlign: "center",
                 border: "2px dashed rgba(255,255,255,0.12)", width: "100%", maxWidth: 360,
