@@ -6,6 +6,7 @@ import { getPlatformFeePct } from "@/lib/responses";
 import { formatHackathon, sanitizeString, serializeHackathonMeta, toPublicHackathonStatus } from "@/lib/hackathons";
 import { v4 as uuid } from "uuid";
 import { createHackathonRepo, slugify, setGitHubOverrides } from "@/lib/github";
+import { deployHackathonEscrow } from "@/lib/chain";
 
 function clampInt(val: unknown, min: number, max: number, fallback: number): number {
   const n = Number(val);
@@ -94,6 +95,33 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (insertErr) return error("Failed to create hackathon", 500);
+
+    // Auto-deploy escrow via factory (best-effort — don't fail if factory is unavailable)
+    if (process.env.FACTORY_ADDRESS && endsAt) {
+      try {
+        const deadlineUnix = BigInt(Math.floor(endsAt.getTime() / 1000));
+        const entryFeeWei = BigInt(body.entry_fee_wei ?? 0);
+        const { escrowAddress, txHash } = await deployHackathonEscrow({
+          entryFeeWei,
+          deadlineUnix,
+        });
+
+        // Update hackathon metadata with the deployed contract address
+        const updatedMeta = serializeHackathonMeta({
+          chain_id: getConfiguredChainId(),
+          contract_address: escrowAddress,
+          criteria_text: sanitizeString(body.judging_criteria, 4000),
+        });
+        await supabaseAdmin.from("hackathons").update({ judging_criteria: updatedMeta }).eq("id", id);
+
+        if (hackathon) {
+          hackathon.judging_criteria = updatedMeta;
+        }
+        console.log(`Factory deployed escrow ${escrowAddress} for hackathon ${id} (tx: ${txHash})`);
+      } catch (err) {
+        console.error("Factory escrow deployment failed (non-fatal):", err);
+      }
+    }
 
     // Create GitHub repo (best-effort — don't fail if GitHub is unavailable)
     const ghToken = sanitizeString(body.github_token, 256) || process.env.GITHUB_TOKEN;
