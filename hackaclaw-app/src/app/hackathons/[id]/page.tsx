@@ -788,8 +788,35 @@ export default function HackathonDetailPage({ params }: { params: Promise<{ id: 
       <div className="pixel-cloud" style={{ width: 8, height: 8, top: 120, animation: "cloud-drift 30s linear infinite", animationDelay: "-8s" }} />
       <div className="pixel-cloud" style={{ width: 12, height: 10, top: 100, animation: "cloud-drift 40s linear infinite", animationDelay: "-20s" }} />
 
+      {/* Background landscape — behind everything */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 0 }}>
+        {/* Hills */}
+        <div className="absolute bottom-0 left-0 right-0" style={{ height: 180, background: "linear-gradient(180deg, transparent 0%, #5da55d 30%, #4a9e4a 100%)", imageRendering: "pixelated" as React.CSSProperties["imageRendering"] }} />
+        <div className="absolute bottom-0 left-[5%]" style={{ width: 300, height: 120, borderRadius: "50% 50% 0 0", background: "#4caf50", imageRendering: "pixelated" as React.CSSProperties["imageRendering"] }} />
+        <div className="absolute bottom-0 right-[8%]" style={{ width: 250, height: 100, borderRadius: "50% 50% 0 0", background: "#43a047", imageRendering: "pixelated" as React.CSSProperties["imageRendering"] }} />
+        <div className="absolute bottom-0 left-[40%]" style={{ width: 350, height: 90, borderRadius: "50% 50% 0 0", background: "#388e3c", imageRendering: "pixelated" as React.CSSProperties["imageRendering"] }} />
+        {/* Trees — left side */}
+        <div className="absolute bottom-[140px] left-[3%]"><PixelTree variant={0} /></div>
+        <div className="absolute bottom-[150px] left-[8%]"><PixelTree variant={1} /></div>
+        <div className="absolute bottom-[130px] left-[14%]"><PixelTree variant={0} /></div>
+        {/* Trees — right side */}
+        <div className="absolute bottom-[135px] right-[4%]"><PixelTree variant={1} /></div>
+        <div className="absolute bottom-[145px] right-[10%]"><PixelTree variant={0} /></div>
+        <div className="absolute bottom-[125px] right-[16%]"><PixelTree variant={1} /></div>
+        {/* Turbine */}
+        <div className="absolute bottom-[155px] right-[22%]"><PixelTurbine /></div>
+        {/* Extra trees scattered */}
+        <div className="absolute bottom-[110px] left-[22%]"><PixelTree variant={1} /></div>
+        <div className="absolute bottom-[115px] right-[28%]"><PixelTree variant={0} /></div>
+        {/* Small bushes / plants */}
+        <div className="absolute bottom-[130px] left-[18%]"><PixelPlant /></div>
+        <div className="absolute bottom-[125px] right-[20%]"><PixelPlant /></div>
+        <div className="absolute bottom-[120px] left-[28%]"><PixelPlant /></div>
+        <div className="absolute bottom-[118px] right-[30%]"><PixelPlant /></div>
+      </div>
+
       {/* Content wrapper */}
-      <div className="flex flex-col items-center" style={{ minHeight: "100vh" }}>
+      <div className="flex flex-col items-center relative" style={{ minHeight: "100vh", zIndex: 1 }}>
         {/* BACK button — visible, top-left, below navbar */}
         <div className="max-w-2xl w-full px-4" style={{ paddingTop: 24 }}>
           <Link
