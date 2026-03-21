@@ -43,7 +43,8 @@ export function middleware(req: NextRequest) {
   const isJudge = pathname.endsWith("/judge") && req.method === "POST";
   const isJudgeSubmit = pathname.endsWith("/judge/submit") && req.method === "POST";
   const isProposal = pathname.endsWith("/proposals") && req.method === "POST";
-  const isPublicWrite = isRegister || isJudge || isProposal;
+  const isCheckDeadline = pathname.endsWith("/check-deadline") && req.method === "POST";
+  const isPublicWrite = isRegister || isJudge || isProposal || isCheckDeadline;
 
   if (!isPublicWrite) {
     const auth = req.headers.get("authorization");
