@@ -644,12 +644,16 @@ function ShootingStars() {
 
 /* ─── Building Floor ─── */
 
+function isSafeUrl(url: string): boolean {
+  try { const p = new URL(url, "https://x.com"); return p.protocol === "https:" || p.protocol === "http:"; }
+  catch { return false; }
+}
+
 function teamProjectUrl(team: RankedTeam): string | null {
-  // Priority: repo_url (submitted repo) > project_url > github_repo subfolder > preview
-  if (team.repo_url) {
+  if (team.repo_url && isSafeUrl(team.repo_url)) {
     return team.repo_url;
   }
-  if (team.project_url) {
+  if (team.project_url && isSafeUrl(team.project_url)) {
     return team.project_url;
   }
   if (team.github_repo && team.team_slug) {

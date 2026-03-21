@@ -133,7 +133,7 @@ export default function EnterprisePage() {
 
       {/* ─── STATS BAR ─── */}
       <section style={{ padding: "48px 24px", borderTop: "1px solid var(--outline)", borderBottom: "1px solid var(--outline)" }}>
-        <div style={{ maxWidth: 900, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, textAlign: "center" }}>
+        <div className="ent-stats-grid" style={{ maxWidth: 900, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, textAlign: "center" }}>
           {STATS.map((s) => (
             <div key={s.label}>
               <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 28, fontWeight: 700, color: "var(--primary)" }}>{s.value}</div>

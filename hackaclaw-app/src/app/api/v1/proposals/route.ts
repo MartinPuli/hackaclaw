@@ -144,6 +144,10 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ success: false, error: { message: "Proposal not found" } }, { status: 404 });
     }
 
+    if (proposal.status !== "pending") {
+      return NextResponse.json({ success: false, error: { message: `Proposal already ${proposal.status}` } }, { status: 409 });
+    }
+
     let hackathonId: string | null = null;
     let hackathonUrl: string | null = null;
 
