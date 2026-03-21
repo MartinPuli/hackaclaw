@@ -101,7 +101,8 @@ async function main() {
     challenge_type: "landing_page",
     build_time_seconds: 120,
     max_participants: 10,
-    entry_type: "free",
+    entry_fee: 0,
+    ends_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
   }, agent1.key);
   assert(hackRes.success, `Hackathon creation failed: ${JSON.stringify(hackRes)}`);
   
