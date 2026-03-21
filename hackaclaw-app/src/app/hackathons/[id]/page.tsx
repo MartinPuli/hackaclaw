@@ -586,6 +586,67 @@ function PixelFence() {
   );
 }
 
+/* ─── Pixel Rooftop ─── */
+
+function PixelRooftop() {
+  return (
+    <div>
+      {/* Antenna */}
+      <div className="flex justify-center mb-[-2px]">
+        <svg viewBox="0 0 12 20" width={18} height={30} style={{ imageRendering: "pixelated" }}>
+          <rect x={5} y={0} width={2} height={4} fill="#f44336" />
+          <rect x={4} y={4} width={4} height={2} fill="#bbb" />
+          <rect x={5} y={6} width={2} height={14} fill="#999" />
+          <rect x={4} y={12} width={4} height={2} fill="#aaa" />
+        </svg>
+      </div>
+      {/* Roof triangle */}
+      <div style={{
+        height: 0,
+        borderLeft: "40px solid transparent",
+        borderRight: "40px solid transparent",
+        borderBottom: "28px solid #5d4037",
+        margin: "0 auto",
+        width: 0,
+      }} />
+      {/* Roof base */}
+      <div style={{
+        height: 16,
+        background: "repeating-linear-gradient(90deg, #6d4c41 0px, #6d4c41 12px, #5d4037 12px, #5d4037 16px, #795548 16px, #795548 28px, #6d4c41 28px, #6d4c41 32px)",
+        borderTop: "3px solid #795548",
+        borderBottom: "3px solid #4e342e",
+        imageRendering: "pixelated" as React.CSSProperties["imageRendering"],
+      }} />
+      {/* Rooftop grass */}
+      <div style={{
+        height: 8,
+        background: "repeating-linear-gradient(90deg, #4caf50 0px, #4caf50 6px, #388e3c 6px, #388e3c 10px, #66bb6a 10px, #66bb6a 14px, #4caf50 14px, #4caf50 20px)",
+        borderBottom: "2px solid #2e7d32",
+        imageRendering: "pixelated" as React.CSSProperties["imageRendering"],
+      }} />
+    </div>
+  );
+}
+
+/* ─── Shooting Star (night) ─── */
+
+function ShootingStars() {
+  return (
+    <>
+      <div className="absolute" style={{
+        top: "8%", left: "70%", width: 3, height: 3, background: "#fff", borderRadius: "50%",
+        boxShadow: "-12px 4px 0 1px rgba(255,255,255,0.4), -24px 8px 0 0 rgba(255,255,255,0.2)",
+        animation: "shooting-star 6s linear infinite", animationDelay: "0s",
+      }} />
+      <div className="absolute" style={{
+        top: "15%", left: "40%", width: 2, height: 2, background: "#fff", borderRadius: "50%",
+        boxShadow: "-10px 3px 0 1px rgba(255,255,255,0.3), -20px 6px 0 0 rgba(255,255,255,0.15)",
+        animation: "shooting-star 8s linear infinite", animationDelay: "-3s",
+      }} />
+    </>
+  );
+}
+
 /* ─── Building Floor ─── */
 
 function BuildingFloor({ team, index }: { team: RankedTeam; index: number }) {
@@ -1075,18 +1136,32 @@ export default function HackathonDetailPage({ params }: { params: Promise<{ id: 
   const sortedTeams = [...teams].sort((a, b) => (a.floor_number || 0) - (b.floor_number || 0));
 
   return (
-    <div className="relative overflow-hidden" style={{ minHeight: "100vh", paddingBottom: 0, background: skyTheme.sky, imageRendering: "pixelated" as React.CSSProperties["imageRendering"], transition: "background 2s ease" }}>
+    <div className="relative overflow-x-hidden" style={{ minHeight: "100vh", paddingBottom: 0, background: skyTheme.sky, imageRendering: "pixelated" as React.CSSProperties["imageRendering"], transition: "background 2s ease" }}>
       {/* Stars (night only) */}
       {skyTheme.starsVisible && <PixelStars />}
+      {skyTheme.starsVisible && <ShootingStars />}
 
       {/* Sun & Moon */}
       <PixelSun angle={sunAngle} />
       <PixelMoon angle={moonAngle} />
 
-      {/* Pixel clouds */}
-      <div className="pixel-cloud" style={{ width: 10, height: 10, top: 80, animation: "cloud-drift 22s linear infinite", background: skyTheme.cloudColor, boxShadow: `8px 0 0 ${skyTheme.cloudColor}, 16px 0 0 ${skyTheme.cloudColor}, -8px 8px 0 ${skyTheme.cloudColor}, 0 8px 0 ${skyTheme.cloudColor}, 8px 8px 0 ${skyTheme.cloudColor}, 16px 8px 0 ${skyTheme.cloudColor}, 24px 8px 0 ${skyTheme.cloudColor}` }} />
-      <div className="pixel-cloud" style={{ width: 8, height: 8, top: 120, animation: "cloud-drift 30s linear infinite", animationDelay: "-8s", background: skyTheme.cloudColor, boxShadow: `8px 0 0 ${skyTheme.cloudColor}, 16px 0 0 ${skyTheme.cloudColor}, -8px 8px 0 ${skyTheme.cloudColor}, 0 8px 0 ${skyTheme.cloudColor}, 8px 8px 0 ${skyTheme.cloudColor}, 16px 8px 0 ${skyTheme.cloudColor}, 24px 8px 0 ${skyTheme.cloudColor}` }} />
-      <div className="pixel-cloud" style={{ width: 12, height: 10, top: 100, animation: "cloud-drift 40s linear infinite", animationDelay: "-20s", background: skyTheme.cloudColor, boxShadow: `8px 0 0 ${skyTheme.cloudColor}, 16px 0 0 ${skyTheme.cloudColor}, -8px 8px 0 ${skyTheme.cloudColor}, 0 8px 0 ${skyTheme.cloudColor}, 8px 8px 0 ${skyTheme.cloudColor}, 16px 8px 0 ${skyTheme.cloudColor}, 24px 8px 0 ${skyTheme.cloudColor}` }} />
+      {/* Pixel clouds — multiple layers */}
+      {[
+        { w: 10, h: 10, top: 75, speed: 22, delay: "0s" },
+        { w: 8, h: 8, top: 110, speed: 30, delay: "-8s" },
+        { w: 12, h: 10, top: 95, speed: 40, delay: "-20s" },
+        { w: 6, h: 6, top: 130, speed: 35, delay: "-12s" },
+        { w: 14, h: 10, top: 60, speed: 50, delay: "-25s" },
+        { w: 9, h: 8, top: 145, speed: 28, delay: "-5s" },
+      ].map((c, i) => (
+        <div key={i} className="pixel-cloud" style={{
+          width: c.w, height: c.h, top: c.top,
+          animation: `cloud-drift ${c.speed}s linear infinite`,
+          animationDelay: c.delay,
+          background: skyTheme.cloudColor,
+          boxShadow: `8px 0 0 ${skyTheme.cloudColor}, 16px 0 0 ${skyTheme.cloudColor}, -8px 8px 0 ${skyTheme.cloudColor}, 0 8px 0 ${skyTheme.cloudColor}, 8px 8px 0 ${skyTheme.cloudColor}, 16px 8px 0 ${skyTheme.cloudColor}, 24px 8px 0 ${skyTheme.cloudColor}`,
+        }} />
+      ))}
 
       {/* Birds */}
       <PixelBird delay={0} top={70} speed={20} />
@@ -1173,10 +1248,10 @@ export default function HackathonDetailPage({ params }: { params: Promise<{ id: 
         <div className="absolute bottom-[87px] right-[13%]"><PixelPlant /></div>
       </div>
 
-      {/* Content wrapper */}
-      <div className="flex flex-col items-center relative" style={{ minHeight: "100vh", zIndex: 1 }}>
-        {/* BACK button — visible, top-left, below navbar */}
-        <div className="max-w-2xl w-full px-4" style={{ paddingTop: 24 }}>
+      {/* Content wrapper — scrollable */}
+      <div className="flex flex-col items-center relative" style={{ minHeight: "120vh", paddingBottom: 80, zIndex: 1 }}>
+        {/* BACK button */}
+        <div className="max-w-2xl w-full px-4" style={{ paddingTop: 80 }}>
           <Link
             href="/hackathons"
             className="pixel-font text-white hover:text-[#ffd700] transition-colors"
@@ -1192,8 +1267,8 @@ export default function HackathonDetailPage({ params }: { params: Promise<{ id: 
           </Link>
         </div>
 
-        {/* Spacer */}
-        <div className="flex-1" />
+        {/* Spacer for scroll */}
+        <div style={{ height: 60 }} />
 
         {/* Building structure anchored to bottom */}
         <div className="max-w-2xl mx-auto px-4 w-full">
@@ -1211,6 +1286,9 @@ export default function HackathonDetailPage({ params }: { params: Promise<{ id: 
             </div>
           )}
 
+          {/* Rooftop */}
+          {teams.length > 0 && <PixelRooftop />}
+
           {/* Building floors (reversed: top floor = highest number) */}
           <div className="flex flex-col-reverse">
             {sortedTeams.map((team, i) => (
@@ -1221,9 +1299,10 @@ export default function HackathonDetailPage({ params }: { params: Promise<{ id: 
           {/* Foundation */}
           {teams.length > 0 && (
             <div style={{
-              height: 24,
-              background: "repeating-linear-gradient(90deg, #555 0px, #555 8px, #666 8px, #666 16px)",
-              borderTop: "3px solid #888",
+              height: 28,
+              background: `repeating-linear-gradient(90deg, #555 0px, #555 8px, #666 8px, #666 16px), repeating-linear-gradient(0deg, transparent 0px, transparent 6px, rgba(0,0,0,0.1) 6px, rgba(0,0,0,0.1) 8px)`,
+              borderTop: "4px solid #888",
+              borderBottom: "2px solid #333",
               imageRendering: "pixelated" as React.CSSProperties["imageRendering"],
             }} />
           )}
@@ -1249,21 +1328,35 @@ export default function HackathonDetailPage({ params }: { params: Promise<{ id: 
           )}
         </div>
 
-        {/* Grass strip — flush with foundation */}
-        <div style={{
-          height: 48,
-          background: `repeating-linear-gradient(90deg, ${skyTheme.grassBase} 0px, ${skyTheme.grassBase} 8px, ${skyTheme.hillColor[1] || "#357a35"} 8px, ${skyTheme.hillColor[1] || "#357a35"} 16px, ${skyTheme.hillColor[0] || "#4a9e4a"} 16px, ${skyTheme.hillColor[0] || "#4a9e4a"} 24px, ${skyTheme.grassBase} 24px, ${skyTheme.grassBase} 32px)`,
-          borderTop: `4px solid ${skyTheme.hillColor[2] || "#2e7d32"}`,
-          imageRendering: "pixelated" as React.CSSProperties["imageRendering"],
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}>
-          {teams.length > 0 && (
-            <span className="pixel-font text-white/70" style={{ fontSize: 8, textShadow: "1px 1px 0 rgba(0,0,0,0.5)" }}>
-              {teams.length} FLOOR{teams.length !== 1 ? "S" : ""} · {totalAgents} AGENT{totalAgents !== 1 ? "S" : ""}
-            </span>
-          )}
+        {/* Textured grass strip */}
+        <div className="w-full relative" style={{ height: 64 }}>
+          {/* Grass blade tips */}
+          <div style={{
+            height: 12,
+            background: `repeating-linear-gradient(90deg, transparent 0px, transparent 4px, ${skyTheme.hillColor[0] || "#4caf50"} 4px, ${skyTheme.hillColor[0] || "#4caf50"} 6px, transparent 6px, transparent 12px, ${skyTheme.hillColor[1] || "#388e3c"} 12px, ${skyTheme.hillColor[1] || "#388e3c"} 14px, transparent 14px, transparent 20px)`,
+            imageRendering: "pixelated" as React.CSSProperties["imageRendering"],
+          }} />
+          {/* Main grass body with dirt layers */}
+          <div style={{
+            height: 28,
+            background: `repeating-linear-gradient(90deg, ${skyTheme.grassBase} 0px, ${skyTheme.grassBase} 8px, ${skyTheme.hillColor[1] || "#357a35"} 8px, ${skyTheme.hillColor[1] || "#357a35"} 16px, ${skyTheme.hillColor[0] || "#4a9e4a"} 16px, ${skyTheme.hillColor[0] || "#4a9e4a"} 24px, ${skyTheme.grassBase} 24px, ${skyTheme.grassBase} 32px)`,
+            borderTop: `4px solid ${skyTheme.hillColor[2] || "#2e7d32"}`,
+            imageRendering: "pixelated" as React.CSSProperties["imageRendering"],
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            {teams.length > 0 && (
+              <span className="pixel-font text-white/70" style={{ fontSize: 8, textShadow: "1px 1px 0 rgba(0,0,0,0.5)" }}>
+                {teams.length} FLOOR{teams.length !== 1 ? "S" : ""} · {totalAgents} AGENT{totalAgents !== 1 ? "S" : ""}
+              </span>
+            )}
+          </div>
+          {/* Dirt layer */}
+          <div style={{
+            height: 24,
+            background: "repeating-linear-gradient(90deg, #8d6e63 0px, #8d6e63 8px, #795548 8px, #795548 16px, #6d4c41 16px, #6d4c41 24px, #8d6e63 24px, #8d6e63 32px), repeating-linear-gradient(0deg, transparent 0px, transparent 10px, rgba(0,0,0,0.08) 10px, rgba(0,0,0,0.08) 12px)",
+            borderTop: "2px solid #5d4037",
+            imageRendering: "pixelated" as React.CSSProperties["imageRendering"],
+          }} />
         </div>
       </div>
     </div>
