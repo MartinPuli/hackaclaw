@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
+import Link from "next/link";
 
 interface AgentSkills {
   creativity: number;
@@ -67,8 +68,6 @@ export default function MarketplacePage() {
     return 0;
   });
 
-  const top3 = AGENTS.slice(0, 3);
-
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === "Escape") setModalAgent(null); };
     document.addEventListener("keydown", handler);
@@ -89,50 +88,44 @@ export default function MarketplacePage() {
     <div className="page">
       <div className="page-header">
         <div className="page-header-left">
+          <div className="breadcrumb">
+            <Link href="/">Home</Link> &gt; Marketplace
+          </div>
           <div className="section-label">Marketplace</div>
           <div className="page-title">Agent Marketplace</div>
-          <div className="page-desc">Discover, compare, and deploy AI agents. Browse top performers, explore their histories, and find the right builder for your challenge.</div>
+          <div className="page-desc">Discover, compare, and shortlist AI agents. Explore skills, challenge history, and ratings — then deploy when your wallet is connected.</div>
         </div>
-        <button className="btn btn-primary" onClick={() => alert("Connect wallet to create agent")}>+ Create Agent</button>
+        <button type="button" className="btn btn-primary" onClick={() => alert("Connect wallet to create agent")}>
+          + Create agent
+        </button>
       </div>
 
-      <div className="stats-bar">
-        <div className="sstat"><div className="sstat-value" style={{ color: "var(--primary)" }}>247</div><div className="sstat-label">Total Agents</div></div>
-        <div className="sstat"><div className="sstat-value" style={{ color: "var(--green)" }}>89</div><div className="sstat-label">Active Now</div></div>
-        <div className="sstat"><div className="sstat-value" style={{ color: "var(--gold)" }}>8,500</div><div className="sstat-label">NEAR Earned</div></div>
-        <div className="sstat"><div className="sstat-value">1,843</div><div className="sstat-label">Total Entries</div></div>
-        <div className="sstat"><div className="sstat-value" style={{ color: "var(--gold)" }}>94.5</div><div className="sstat-label">Top Score</div></div>
-      </div>
-
-      {/* FEATURED */}
-      <div className="featured-section">
-        <div className="featured-title">Top Performers</div>
-        <div className="featured-grid">
-          {top3.map((a, i) => (
-            <div key={a.id} className="featured-card fade-in" style={{ transitionDelay: `${i * 0.1}s` }} onClick={() => setModalAgent(a)}>
-              <div className="f-avatar" style={{ background: a.bg }}>{a.avatar}</div>
-              <div className="f-info">
-                <div className="f-name">{a.name}</div>
-                <div className="f-model">{a.model} · {a.owner}</div>
-                <div className="f-stats">
-                  <div><div className="f-stat-value" style={{ color: "var(--gold)" }}>{a.wins}</div><div className="f-stat-label">Wins</div></div>
-                  <div><div className="f-stat-value" style={{ color: "var(--primary)" }}>{a.score}</div><div className="f-stat-label">Top Score</div></div>
-                  <div><div className="f-stat-value">{a.entries}</div><div className="f-stat-label">Entries</div></div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+      <p className="marketplace-toolbar-meta">
+        Showing <strong style={{ color: "var(--text)" }}>{filtered.length}</strong> of {AGENTS.length} agents
+        {search ? ` matching “${search}”` : ""}
+      </p>
 
       {/* FILTERS */}
       <div className="filters-bar">
         <div className="search-box">
-          <span className="search-icon">🔍</span>
-          <input type="text" placeholder="Search agents by name, model, or owner..." value={search} onChange={(e) => setSearch(e.target.value)} />
+          <span className="search-icon" aria-hidden>
+            🔍
+          </span>
+          <input
+            type="search"
+            placeholder="Search by name, model, or owner…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            aria-label="Search agents"
+          />
         </div>
         {["all", "claude", "gpt", "gemini"].map((f) => (
-          <button key={f} className={`filter-btn ${filter === f ? "active" : ""}`} onClick={() => setFilter(f)}>
+          <button
+            key={f}
+            type="button"
+            className={`filter-btn ${filter === f ? "active" : ""}`}
+            onClick={() => setFilter(f)}
+          >
             {f === "all" ? "All" : f === "claude" ? "Claude" : f === "gpt" ? "GPT-4o" : "Gemini"}
           </button>
         ))}
@@ -144,42 +137,114 @@ export default function MarketplacePage() {
       </div>
 
       {/* AGENTS GRID */}
-      <div className="agents-grid">
-        {filtered.map((a, i) => (
-          <div key={a.id} className="agent-card fade-in" style={{ transitionDelay: `${i * 0.05}s` }} onClick={() => setModalAgent(a)}>
-            <div className="agent-top">
-              <div className="a-avatar" style={{ background: a.bg }}>{a.avatar}</div>
-              <div className="a-info">
-                <div className="a-name">{a.name}</div>
-                <div className="a-owner">{a.owner}</div>
-                <div className="a-model-badge">{a.model}</div>
+      {filtered.length === 0 ? (
+        <div className="marketplace-empty fade-in visible">
+          <div className="marketplace-empty-icon" aria-hidden>
+            🦗
+          </div>
+          <div className="marketplace-empty-title">No agents match</div>
+          <p className="marketplace-empty-desc">Try another search term or clear the model filter.</p>
+          <button type="button" className="btn btn-outline btn-sm" onClick={() => { setSearch(""); setFilter("all"); }}>
+            Reset filters
+          </button>
+        </div>
+      ) : (
+        <div className="agents-grid">
+          {filtered.map((a, i) => (
+            <div
+              key={a.id}
+              className="agent-card fade-in"
+              style={{ transitionDelay: `${i * 0.05}s` }}
+              onClick={() => setModalAgent(a)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  setModalAgent(a);
+                }
+              }}
+              role="button"
+              tabIndex={0}
+              aria-label={`Open profile for ${a.name}`}
+            >
+              <div className="agent-top">
+                <div className="a-avatar" style={{ background: a.bg }}>
+                  {a.avatar}
+                </div>
+                <div className="a-info">
+                  <div className="a-name">{a.name}</div>
+                  <div className="a-owner">{a.owner}</div>
+                  <div className="a-model-badge">{a.model}</div>
+                </div>
+              </div>
+              <div className="a-desc">{a.desc}</div>
+              <div className="a-stats">
+                <div className="a-stat">
+                  <div className="a-stat-value" style={{ color: "var(--gold)" }}>
+                    {a.wins}
+                  </div>
+                  <div className="a-stat-label">Wins</div>
+                </div>
+                <div className="a-stat">
+                  <div className="a-stat-value" style={{ color: "var(--primary)" }}>
+                    {a.score}
+                  </div>
+                  <div className="a-stat-label">Score</div>
+                </div>
+                <div className="a-stat">
+                  <div className="a-stat-value">{a.entries}</div>
+                  <div className="a-stat-label">Entries</div>
+                </div>
+                <div className="a-stat">
+                  <div className="a-stat-value" style={{ color: "var(--gold)" }}>
+                    ★ {a.rating}
+                  </div>
+                  <div className="a-stat-label">Rating</div>
+                </div>
+              </div>
+              <div className="a-tags">
+                {a.tools.map((t) => (
+                  <span key={t} className="a-tag">
+                    {t}
+                  </span>
+                ))}
+              </div>
+              <div className="a-footer">
+                <span className="a-footer-hint">View details</span>
+                <button
+                  type="button"
+                  className="btn btn-outline btn-sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setModalAgent(a);
+                  }}
+                >
+                  Profile
+                </button>
               </div>
             </div>
-            <div className="a-desc">{a.desc}</div>
-            <div className="a-stats">
-              <div className="a-stat"><div className="a-stat-value" style={{ color: "var(--gold)" }}>{a.wins}</div><div className="a-stat-label">Wins</div></div>
-              <div className="a-stat"><div className="a-stat-value" style={{ color: "var(--primary)" }}>{a.score}</div><div className="a-stat-label">Score</div></div>
-              <div className="a-stat"><div className="a-stat-value">{a.entries}</div><div className="a-stat-label">Entries</div></div>
-              <div className="a-stat"><div className="a-stat-value" style={{ color: "var(--gold)" }}>★ {a.rating}</div><div className="a-stat-label">Rating</div></div>
-            </div>
-            <div className="a-tags">{a.tools.map((t) => <span key={t} className="a-tag">{t}</span>)}</div>
-            <div className="a-footer">
-              <div className="a-rating">★ {a.rating}</div>
-              <button className="btn btn-outline btn-sm" onClick={(e) => { e.stopPropagation(); setModalAgent(a); }}>View Profile</button>
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* MODAL */}
       {modalAgent && (
-        <div className="modal-overlay open" onClick={(e) => { if (e.target === e.currentTarget) setModalAgent(null); }}>
+        <div
+          className="modal-overlay open"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="marketplace-modal-title"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setModalAgent(null);
+          }}
+        >
           <div className="modal">
             <div className="modal-header">
-              <button className="modal-close" onClick={() => setModalAgent(null)}>✕</button>
+              <button type="button" className="modal-close" onClick={() => setModalAgent(null)} aria-label="Close">
+                ✕
+              </button>
               <div className="modal-avatar" style={{ background: modalAgent.bg }}>{modalAgent.avatar}</div>
               <div className="modal-info">
-                <h2>{modalAgent.name}</h2>
+                <h2 id="marketplace-modal-title">{modalAgent.name}</h2>
                 <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: "var(--text-muted)", margin: "4px 0" }}>
                   {modalAgent.model} · {modalAgent.owner}
                 </div>
@@ -224,8 +289,12 @@ export default function MarketplacePage() {
                 Agent ID: {modalAgent.id.toString(16).padStart(8, "0").toUpperCase()}
               </div>
               <div style={{ display: "flex", gap: 12 }}>
-                <button className="btn btn-outline btn-sm" onClick={() => setModalAgent(null)}>Close</button>
-                <button className="btn btn-primary" onClick={() => alert("Connect wallet to deploy agent")}>Deploy in Challenge</button>
+                <button type="button" className="btn btn-outline btn-sm" onClick={() => setModalAgent(null)}>
+                  Close
+                </button>
+                <button type="button" className="btn btn-primary" onClick={() => alert("Connect wallet to deploy agent")}>
+                  Deploy in challenge
+                </button>
               </div>
             </div>
           </div>

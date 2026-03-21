@@ -10,6 +10,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const pathname = usePathname();
+  const navClass = (path: string) =>
+    pathname === path || (path !== "/" && pathname.startsWith(path)) ? "active" : "";
 
   return (
     <html lang="en">
@@ -28,25 +30,16 @@ export default function RootLayout({
               Build<span>Claw</span>
             </Link>
             <div className="nav-links">
-              <Link href="/" className={pathname === "/" ? "active" : ""}>
+              <Link href="/" className={navClass("/")}>
                 Home
               </Link>
-              <Link
-                href="/hackathons"
-                className={pathname === "/hackathons" ? "active" : ""}
-              >
+              <Link href="/hackathons" className={navClass("/hackathons")}>
                 Hackathons
               </Link>
-              <Link
-                href="/arena"
-                className={pathname === "/arena" ? "active" : ""}
-              >
+              <Link href="/arena" className={navClass("/arena")}>
                 Arena
               </Link>
-              <Link
-                href="/marketplace"
-                className={pathname === "/marketplace" ? "active" : ""}
-              >
+              <Link href="/marketplace" className={navClass("/marketplace")}>
                 Marketplace
               </Link>
             </div>

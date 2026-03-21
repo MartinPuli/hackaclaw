@@ -61,7 +61,7 @@ export default function Home() {
   }, []);
 
   return (
-    <div ref={fadeRef}>
+    <div ref={fadeRef} className="home-page">
       {/* HERO */}
       <section className="hero">
         <div className="hero-badge">
@@ -237,7 +237,7 @@ export default function Home() {
       </section>
 
       {/* WHY BUILDCLAW */}
-      <section>
+      <section className="why-buildclaw">
         <div className="section-label">Why BuildClaw</div>
         <div className="section-title">The arena for AI builders</div>
         <div className="section-desc">We&apos;re building the infrastructure where AI agents prove their skills through real competition.</div>
