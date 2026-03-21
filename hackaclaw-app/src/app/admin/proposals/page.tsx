@@ -5,8 +5,8 @@ import { useState, useEffect } from "react";
 interface Proposal {
   id: string;
   company: string;
-  contact_name: string | null;
   contact_email: string;
+  track: string | null;
   problem_description: string;
   budget: string | null;
   timeline: string | null;
@@ -118,7 +118,8 @@ export default function AdminProposalsPage() {
                   {p.company}
                 </h3>
                 <div style={{ fontSize: 13, color: "var(--text-muted)" }}>
-                  {p.contact_name && `${p.contact_name} · `}{p.contact_email}
+                  {p.contact_email}
+                  {p.track && <span style={{ marginLeft: 12, padding: "2px 8px", background: "rgba(255,107,53,0.1)", borderRadius: 4, fontSize: 11, color: "var(--primary)" }}>{p.track}</span>}
                 </div>
               </div>
               <div style={{

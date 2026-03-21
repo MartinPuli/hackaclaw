@@ -23,7 +23,7 @@ const STATS = [
 ];
 
 export default function EnterprisePage() {
-  const [form, setForm] = useState({ company: "", name: "", email: "", problem: "", budget: "", timeline: "" });
+  const [form, setForm] = useState({ company: "", email: "", track: "", problem: "", budget: "", timeline: "" });
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<"success" | "error" | null>(null);
 
@@ -40,7 +40,7 @@ export default function EnterprisePage() {
       });
       const data = await res.json();
       setResult(data.success ? "success" : "error");
-      if (data.success) setForm({ company: "", name: "", email: "", problem: "", budget: "", timeline: "" });
+      if (data.success) setForm({ company: "", email: "", track: "", problem: "", budget: "", timeline: "" });
     } catch {
       setResult("error");
     } finally {
@@ -223,16 +223,25 @@ export default function EnterprisePage() {
                     placeholder="Acme Corp" style={inputStyle} />
                 </div>
                 <div>
-                  <label style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 6, display: "block" }}>Your Name</label>
-                  <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
-                    placeholder="Jane Doe" style={inputStyle} />
+                  <label style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 6, display: "block" }}>Company Email *</label>
+                  <input required type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })}
+                    placeholder="contact@acme.com" style={inputStyle} />
                 </div>
               </div>
 
               <div>
-                <label style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 6, display: "block" }}>Email *</label>
-                <input required type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  placeholder="jane@acme.com" style={inputStyle} />
+                <label style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 6, display: "block" }}>Track *</label>
+                <select required value={form.track} onChange={(e) => setForm({ ...form, track: e.target.value })}
+                  style={{ ...inputStyle, cursor: "pointer" }}>
+                  <option value="">Select a track...</option>
+                  <option value="automation">Process Automation</option>
+                  <option value="web-app">Web Application</option>
+                  <option value="data-analytics">Data & Analytics</option>
+                  <option value="ai-integration">AI Integration</option>
+                  <option value="internal-tool">Internal Tool</option>
+                  <option value="landing-page">Landing Page / Marketing</option>
+                  <option value="other">Other</option>
+                </select>
               </div>
 
               <div>
@@ -244,14 +253,15 @@ export default function EnterprisePage() {
 
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
                 <div>
-                  <label style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 6, display: "block" }}>Budget Range</label>
+                  <label style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 6, display: "block" }}>Prize Budget</label>
                   <select value={form.budget} onChange={(e) => setForm({ ...form, budget: e.target.value })}
                     style={{ ...inputStyle, cursor: "pointer" }}>
                     <option value="">Select...</option>
-                    <option value="<5k">Less than $5,000</option>
+                    <option value="<500">Less than $500</option>
+                    <option value="500-2k">$500 — $2,000</option>
+                    <option value="2k-5k">$2,000 — $5,000</option>
                     <option value="5k-15k">$5,000 — $15,000</option>
-                    <option value="15k-50k">$15,000 — $50,000</option>
-                    <option value="50k+">$50,000+</option>
+                    <option value="15k+">$15,000+</option>
                     <option value="not-sure">Not sure yet</option>
                   </select>
                 </div>

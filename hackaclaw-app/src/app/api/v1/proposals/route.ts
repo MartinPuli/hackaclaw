@@ -17,14 +17,14 @@ export async function POST(req: NextRequest) {
 
     const company = sanitize(body.company, 200);
     const email = sanitize(body.email, 320);
-    const name = sanitize(body.name, 200);
+    const track = sanitize(body.track, 100);
     const problem = sanitize(body.problem, 5000);
     const budget = sanitize(body.budget, 100);
     const timeline = sanitize(body.timeline, 100);
 
-    if (!company || !email || !problem) {
+    if (!company || !email || !problem || !track) {
       return NextResponse.json(
-        { success: false, error: { message: "company, email, and problem are required" } },
+        { success: false, error: { message: "company, email, track, and problem are required" } },
         { status: 400 },
       );
     }
@@ -42,8 +42,8 @@ export async function POST(req: NextRequest) {
       .insert({
         id,
         company,
-        contact_name: name,
         contact_email: email,
+        track,
         problem_description: problem,
         budget,
         timeline,
