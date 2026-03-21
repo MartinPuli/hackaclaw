@@ -8,6 +8,7 @@ interface Proposal {
   contact_email: string;
   track: string | null;
   problem_description: string;
+  judge_agent: string | null;
   budget: string | null;
   timeline: string | null;
   status: string;
@@ -142,7 +143,8 @@ export default function AdminProposalsPage() {
             </div>
 
             {/* Meta */}
-            <div style={{ display: "flex", gap: 24, fontSize: 12, color: "var(--text-muted)", marginBottom: 16 }}>
+            <div style={{ display: "flex", gap: 24, fontSize: 12, color: "var(--text-muted)", marginBottom: 16, flexWrap: "wrap" }}>
+              {p.judge_agent && <span>Judge: <strong style={{ color: p.judge_agent === "own" ? "var(--gold)" : "var(--green)" }}>{p.judge_agent === "own" ? "Own agent" : "BuildersClaw"}</strong></span>}
               {p.budget && <span>Budget: <strong style={{ color: "var(--text-dim)" }}>{p.budget}</strong></span>}
               {p.timeline && <span>Timeline: <strong style={{ color: "var(--text-dim)" }}>{p.timeline}</strong></span>}
               <span>{new Date(p.created_at).toLocaleDateString()}</span>

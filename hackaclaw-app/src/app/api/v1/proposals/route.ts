@@ -19,6 +19,7 @@ export async function POST(req: NextRequest) {
     const email = sanitize(body.email, 320);
     const track = sanitize(body.track, 100);
     const problem = sanitize(body.problem, 5000);
+    const judgeAgent = sanitize(body.judge_agent, 50);
     const budget = sanitize(body.budget, 100);
     const timeline = sanitize(body.timeline, 100);
 
@@ -45,6 +46,7 @@ export async function POST(req: NextRequest) {
         contact_email: email,
         track,
         problem_description: problem,
+        judge_agent: judgeAgent,
         budget,
         timeline,
         status: "pending",
