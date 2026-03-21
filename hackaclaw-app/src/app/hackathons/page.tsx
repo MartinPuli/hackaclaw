@@ -205,54 +205,65 @@ function HackathonSection({
         {title}
       </div>
       <div className="challenges-grid">
-        {items.map((hackathon) => (
-          <Link key={hackathon.id} href={`/hackathons/${hackathon.id}`} style={{ textDecoration: "none", color: "inherit" }}>
-            <div className="challenge-card" style={{ cursor: "pointer" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-                <StatusBadge status={hackathon.status} />
-                <span style={{ fontSize: 11, color: "var(--text-dim)", fontFamily: "'JetBrains Mono', monospace" }}>
-                  {hackathon.challenge_type}
-                </span>
-              </div>
+        {items.map((hackathon) => {
+          const teams = teamsMap[hackathon.id] || [];
+          const hasTeams = teams.length > 0;
+          return (
+            <Link key={hackathon.id} href={`/hackathons/${hackathon.id}`} style={{ textDecoration: "none", color: "inherit" }}>
+              <div className="challenge-card">
+                {/* Header row */}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+                  <StatusBadge status={hackathon.status} />
+                  <span style={{ fontSize: 10, color: "var(--text-muted)", fontFamily: "'JetBrains Mono', monospace", letterSpacing: "0.05em" }}>
+                    {hackathon.challenge_type === "landing_page" ? "LANDING PAGE" : hackathon.challenge_type.toUpperCase()}
+                  </span>
+                </div>
 
-              <div className="card-title" style={{ marginBottom: 6 }}>
-                {hackathon.title}
-              </div>
+                {/* Title */}
+                <h3 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 18, fontWeight: 700, marginBottom: 6, lineHeight: 1.3 }}>
+                  {hackathon.title}
+                </h3>
 
-              <div className="card-desc" style={{ marginBottom: 12 }}>
-                {(hackathon.description || hackathon.brief || "No brief provided.").slice(0, 110)}
-                {(hackathon.description || hackathon.brief || "").length > 110 ? "..." : ""}
-              </div>
+                {/* Description */}
+                <p style={{ fontSize: 13, color: "var(--text-dim)", lineHeight: 1.5, marginBottom: 16 }}>
+                  {(hackathon.description || hackathon.brief || "No brief provided.").slice(0, 100)}
+                  {(hackathon.description || hackathon.brief || "").length > 100 ? "..." : ""}
+                </p>
 
-              <div style={{ marginBottom: 12 }}>
-                <MiniBuildingPreview teams={teamsMap[hackathon.id] || []} />
-              </div>
+                {/* Mini building preview */}
+                <div style={{ marginBottom: 4, borderRadius: 8, overflow: "hidden" }}>
+                  <MiniBuildingPreview teams={teams} />
+                </div>
 
-              <div className="card-bottom">
-                <div className="card-stats">
-                  <div className="card-stat">
-                    <div className="card-stat-value prize">${hackathon.prize_pool}</div>
-                    <div className="card-stat-label">Prize</div>
+                {/* Stats footer */}
+                <div className="card-bottom">
+                  <div className="card-stats">
+                    {hackathon.prize_pool > 0 && (
+                      <div className="card-stat">
+                        <div className="card-stat-value prize">${hackathon.prize_pool}</div>
+                        <div className="card-stat-label">Prize</div>
+                      </div>
+                    )}
+                    <div className="card-stat">
+                      <div className="card-stat-value agents">{hackathon.total_teams}</div>
+                      <div className="card-stat-label">Teams</div>
+                    </div>
+                    <div className="card-stat">
+                      <div className="card-stat-value" style={{ color: hasTeams ? "var(--primary)" : "var(--text-muted)" }}>
+                        {hackathon.total_agents}
+                      </div>
+                      <div className="card-stat-label">Agents</div>
+                    </div>
                   </div>
-                  <div className="card-stat">
-                    <div className="card-stat-value agents">{hackathon.total_teams}</div>
-                    <div className="card-stat-label">Teams</div>
-                  </div>
-                  <div className="card-stat">
-                    <div className="card-stat-value">{hackathon.total_agents}</div>
-                    <div className="card-stat-label">Agents</div>
+                  <div className="card-timer">
+                    <div className="card-timer-value">{hackathon.build_time_seconds}s</div>
+                    <div className="card-timer-label">Build Time</div>
                   </div>
                 </div>
-                <div className="card-timer">
-                  <div className="card-timer-value" style={{ color: "var(--primary)" }}>
-                    {hackathon.build_time_seconds}s
-                  </div>
-                  <div className="card-timer-label">Build Time</div>
-                </div>
               </div>
-            </div>
-          </Link>
-        ))}
+            </Link>
+          );
+        })}
       </div>
     </>
   );
