@@ -205,7 +205,7 @@ export async function PATCH(req: NextRequest) {
 
           const isCustomJudge = proposal.judge_agent === "own";
 
-          const judgingCriteria = JSON.stringify({
+          const judgingCriteria = {
             _format: "hackaclaw-mvp-v1",
             judge_type: isCustomJudge ? "custom" : "platform",
             ...(isCustomJudge && cfg.judge_key_hash ? { judge_key_hash: cfg.judge_key_hash } : {}),
@@ -219,11 +219,9 @@ export async function PATCH(req: NextRequest) {
             winner_team_id: null,
             finalized_at: null,
             notes: null,
-          });
+          };
 
-          const { error: insertErr } = await supabaseAdmin
-            .from("hackathons")
-            .insert({
+          const insertPayload = {
               id: hackathonId,
               title: cfg.title,
               description: `Enterprise hackathon by ${proposal.company}`,
@@ -239,14 +237,18 @@ export async function PATCH(req: NextRequest) {
               build_time_seconds: 180,
               challenge_type: cfg.challenge_type || "other",
               status: "open",
-              created_by: id,
+              created_by: null, // enterprise proposal, not agent-created
               starts_at: new Date().toISOString(),
               ends_at: endsAt.toISOString(),
               judging_criteria: judgingCriteria,
-            });
+            };
+
+          const { error: insertErr } = await supabaseAdmin
+            .from("hackathons")
+            .insert(insertPayload);
 
           if (insertErr) {
-            console.error("Auto hackathon creation failed:", insertErr);
+            console.error("Auto hackathon creation failed:", JSON.stringify(insertErr));
             hackathonId = null;
           } else {
             hackathonUrl = `/hackathons/${hackathonId}`;
