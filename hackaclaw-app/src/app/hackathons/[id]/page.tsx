@@ -1,7 +1,7 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import { useState, useEffect, use, useCallback, useRef } from "react";
+import { useState, useEffect, use } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 
@@ -94,16 +94,6 @@ function PixelLobster({
   borderColor: string;
 }) {
   const [showName, setShowName] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const onPointerDown = useCallback(() => {
-    timerRef.current = setTimeout(() => setShowName(true), 300);
-  }, []);
-
-  const onPointerUp = useCallback(() => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-    setShowName(false);
-  }, []);
 
   // Pixel unit scale
   const px = size / 16;
@@ -112,9 +102,8 @@ function PixelLobster({
     <div
       className="relative cursor-pointer select-none"
       style={{ width: size, height: size + px * 2 }}
-      onPointerDown={onPointerDown}
-      onPointerUp={onPointerUp}
-      onPointerLeave={onPointerUp}
+      onPointerEnter={() => setShowName(true)}
+      onPointerLeave={() => setShowName(false)}
     >
       <AnimatePresence>
         {showName && (
