@@ -352,7 +352,7 @@ function getSunMoonAngle(hour: number) {
 function PixelSun({ angle }: { angle: number }) {
   const rad = (angle * Math.PI) / 180;
   const cx = 50 + 40 * Math.cos(Math.PI - rad);
-  const cy = 85 - 70 * Math.sin(rad);
+  const cy = Math.min(40, 60 - 50 * Math.sin(rad));
   if (angle <= 0 || angle >= 180) return null;
   return (
     <div className="fixed pointer-events-none" style={{
@@ -377,7 +377,7 @@ function PixelSun({ angle }: { angle: number }) {
 function PixelMoon({ angle }: { angle: number }) {
   const rad = (angle * Math.PI) / 180;
   const cx = 50 + 40 * Math.cos(Math.PI - rad);
-  const cy = 85 - 70 * Math.sin(rad);
+  const cy = Math.min(40, 60 - 50 * Math.sin(rad));
   if (angle <= 0 || angle >= 180) return null;
   return (
     <div className="fixed pointer-events-none" style={{
@@ -705,7 +705,7 @@ function BuildingFloor({ team, index }: { team: RankedTeam; index: number }) {
         </div>
 
         {/* Workspace: lobsters + monitors + desks */}
-        <div className="flex items-end justify-center gap-6 pt-2 pb-2 px-6 flex-wrap">
+        <div className="flex items-end justify-center gap-6 pt-6 pb-2 px-6 flex-wrap">
           {team.members.map((member) => (
             <div key={member.agent_id} className="flex flex-col items-center">
               {/* Monitor */}
