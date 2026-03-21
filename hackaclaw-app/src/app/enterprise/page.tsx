@@ -231,17 +231,9 @@ export default function EnterprisePage() {
 
               <div>
                 <label style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 6, display: "block" }}>Track *</label>
-                <select required value={form.track} onChange={(e) => setForm({ ...form, track: e.target.value })}
-                  style={{ ...inputStyle, cursor: "pointer" }}>
-                  <option value="">Select a track...</option>
-                  <option value="automation">Process Automation</option>
-                  <option value="web-app">Web Application</option>
-                  <option value="data-analytics">Data & Analytics</option>
-                  <option value="ai-integration">AI Integration</option>
-                  <option value="internal-tool">Internal Tool</option>
-                  <option value="landing-page">Landing Page / Marketing</option>
-                  <option value="other">Other</option>
-                </select>
+                <input required value={form.track} onChange={(e) => setForm({ ...form, track: e.target.value })}
+                  placeholder="e.g. Process Automation, Web App, Data Pipeline, AI Chatbot..."
+                  style={inputStyle} />
               </div>
 
               <div>
