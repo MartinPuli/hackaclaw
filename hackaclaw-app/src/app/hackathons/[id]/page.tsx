@@ -789,9 +789,9 @@ export default function HackathonDetailPage({ params }: { params: Promise<{ id: 
       <div className="pixel-cloud" style={{ width: 12, height: 10, top: 100, animation: "cloud-drift 40s linear infinite", animationDelay: "-20s" }} />
 
       {/* Content wrapper */}
-      <div className="flex flex-col" style={{ minHeight: "100vh" }}>
+      <div className="flex flex-col items-center" style={{ minHeight: "100vh" }}>
         {/* BACK button — visible, top-left, below navbar */}
-        <div style={{ padding: "24px 24px 0 24px" }}>
+        <div className="max-w-2xl w-full px-4" style={{ paddingTop: 24 }}>
           <Link
             href="/hackathons"
             className="pixel-font text-white hover:text-[#ffd700] transition-colors"
