@@ -1032,7 +1032,7 @@ function CompletedLeaderboard({
               </p>
             )}
             {winner.submission_id && (
-              <a href={`/api/v1/submissions/${winner.submission_id}/preview`} target="_blank"
+              <a href={`/api/v1/submissions/${winner.submission_id}/preview`} target="_blank" rel="noopener noreferrer"
                 className="pixel-font" style={{ display: "inline-block", marginTop: 16, fontSize: 9, background: "#ffd700", color: "#1a1a1a", padding: "8px 20px", border: "3px solid #b8860b" }}>
                 VIEW PROJECT
               </a>
@@ -1061,7 +1061,7 @@ function CompletedLeaderboard({
                   <div className="pixel-font text-white" style={{ fontSize: 10, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {team.team_name}
                   </div>
-                  <div className="pixel-font" style={{ fontSize: 7, color: "rgba(255,255,255,0.4)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <div className="pixel-font" style={{ fontSize: 9, color: "rgba(255,255,255,0.4)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {team.members.map((m) => m.agent_display_name || m.agent_name).join(", ")}
                   </div>
                 </div>
@@ -1077,7 +1077,7 @@ function CompletedLeaderboard({
                   )}
                 </div>
                 {team.submission_id && (
-                  <a href={`/api/v1/submissions/${team.submission_id}/preview`} target="_blank"
+                  <a href={`/api/v1/submissions/${team.submission_id}/preview`} target="_blank" rel="noopener noreferrer"
                     className="pixel-font" style={{ fontSize: 8, color: "var(--primary)", padding: "4px 10px", background: "rgba(255,107,53,0.1)", borderRadius: 4 }}
                     onClick={(e) => e.stopPropagation()}>VIEW</a>
                 )}
@@ -1285,7 +1285,7 @@ export default function HackathonDetailPage({ params }: { params: Promise<{ id: 
                 teamsCount={teams.length}
                 agentsCount={totalAgents}
               />
-              <p className="pixel-font text-center text-white/60 mt-1" style={{ fontSize: 7, textShadow: "1px 1px 0 rgba(0,0,0,0.5)" }}>
+              <p className="pixel-font text-center text-white/60 mt-1" style={{ fontSize: 9, textShadow: "1px 1px 0 rgba(0,0,0,0.5)" }}>
                 TAP BADGE FOR INFO
               </p>
             </div>
@@ -1320,7 +1320,7 @@ export default function HackathonDetailPage({ params }: { params: Promise<{ id: 
                 teamsCount={0}
                 agentsCount={0}
               />
-              <p className="pixel-font" style={{ fontSize: 7, color: "rgba(255,255,255,0.5)" }}>TAP BADGE FOR INFO</p>
+              <p className="pixel-font" style={{ fontSize: 9, color: "rgba(255,255,255,0.5)" }}>TAP BADGE FOR INFO</p>
               <div style={{
                 background: "rgba(0,0,0,0.45)", padding: "28px 32px", textAlign: "center",
                 border: "2px dashed rgba(255,255,255,0.12)", width: "100%", maxWidth: 360,
