@@ -5,6 +5,18 @@ import { success, created, error, unauthorized } from "@/lib/responses";
 import { getPlatformFeePct } from "@/lib/responses";
 import { v4 as uuid } from "uuid";
 
+function sanitize(val: unknown, maxLen: number): string | null {
+  if (val === null || val === undefined) return null;
+  if (typeof val !== "string") return null;
+  return val.trim().slice(0, maxLen) || null;
+}
+
+function clampInt(val: unknown, min: number, max: number, fallback: number): number {
+  const n = Number(val);
+  if (isNaN(n)) return fallback;
+  return Math.max(min, Math.min(max, Math.round(n)));
+}
+
 /**
  * POST /api/v1/hackathons — Create a new hackathon. Requires auth.
  */
@@ -14,43 +26,45 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const {
-      title, description, brief, rules,
-      entry_type = "free", entry_fee = 0, prize_pool = 0,
-      max_participants = 100,
-      team_size_min = 1, team_size_max = 5,
-      build_time_seconds = 120,
-      challenge_type = "landing_page",
-      starts_at, ends_at,
-      judging_criteria,
-    } = body;
+    const title = sanitize(body.title, 200);
+    const brief = sanitize(body.brief, 5000);
 
     if (!title || !brief) {
       return error("title and brief are required");
     }
 
     const id = uuid();
-    const platformFee = getPlatformFeePct();
 
     const { data: hackathon, error: insertErr } = await supabaseAdmin
       .from("hackathons")
       .insert({
-        id, title, description: description || null, brief, rules: rules || null,
-        entry_type, entry_fee, prize_pool, platform_fee_pct: platformFee,
-        max_participants, team_size_min, team_size_max,
-        build_time_seconds, challenge_type, status: "open",
+        id,
+        title,
+        description: sanitize(body.description, 1000),
+        brief,
+        rules: sanitize(body.rules, 2000),
+        entry_type: body.entry_type === "paid" ? "paid" : "free",
+        entry_fee: clampInt(body.entry_fee, 0, 1_000_000, 0),
+        prize_pool: clampInt(body.prize_pool, 0, 10_000_000, 0),
+        platform_fee_pct: getPlatformFeePct(),
+        max_participants: clampInt(body.max_participants, 1, 1000, 100),
+        team_size_min: clampInt(body.team_size_min, 1, 20, 1),
+        team_size_max: clampInt(body.team_size_max, 1, 20, 5),
+        build_time_seconds: clampInt(body.build_time_seconds, 30, 600, 120),
+        challenge_type: sanitize(body.challenge_type, 50) || "landing_page",
+        status: "open",
         created_by: agent.id,
-        starts_at: starts_at || null, ends_at: ends_at || null,
-        judging_criteria: judging_criteria || null,
+        starts_at: body.starts_at || null,
+        ends_at: body.ends_at || null,
+        judging_criteria: body.judging_criteria || null,
       })
       .select("*")
       .single();
 
-    if (insertErr) return error(insertErr.message, 500);
+    if (insertErr) return error("Failed to create hackathon", 500);
     return created(hackathon);
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : "Internal error";
-    return error(msg, 500);
+  } catch {
+    return error("Invalid request body", 400);
   }
 }
 
@@ -63,14 +77,20 @@ export async function GET(req: NextRequest) {
 
   let query = supabaseAdmin.from("hackathons").select("*");
 
-  if (status) query = query.eq("status", status);
-  if (challengeType) query = query.eq("challenge_type", challengeType);
+  // Validate status filter
+  const validStatuses = ["draft", "open", "in_progress", "judging", "completed", "cancelled"];
+  if (status && validStatuses.includes(status)) {
+    query = query.eq("status", status);
+  }
+  if (challengeType) {
+    query = query.eq("challenge_type", challengeType.slice(0, 50));
+  }
 
-  const { data: hackathons, error: queryErr } = await query.order("created_at", { ascending: false });
+  const { data: hackathons, error: queryErr } = await query.order("created_at", { ascending: false }).limit(50);
 
-  if (queryErr) return error(queryErr.message, 500);
+  if (queryErr) return error("Failed to load hackathons", 500);
 
-  // Enrich with team/agent counts
+  // Enrich with counts
   const enriched = await Promise.all(
     (hackathons || []).map(async (h) => {
       const { count: teamCount } = await supabaseAdmin
