@@ -590,19 +590,22 @@ function PixelRooftop() {
           <rect x={9} y={5} width={2} height={2} fill="#ff5252" />
         </svg>
       </div>
-      {/* Roof — brick triangle shape via SVG */}
-      <svg viewBox="0 0 200 40" width="100%" height={40} preserveAspectRatio="none" style={{ display: "block", imageRendering: "pixelated" }}>
+      {/* Roof — tall brick triangle shape via SVG */}
+      <svg viewBox="0 0 200 80" width="100%" height={80} preserveAspectRatio="none" style={{ display: "block", imageRendering: "pixelated" }}>
         {/* Main roof shape */}
-        <polygon points="100,0 0,40 200,40" fill="#6d4c41" />
-        <polygon points="100,0 10,40 190,40" fill="#795548" />
-        <polygon points="100,4 20,40 180,40" fill="#8d6e63" />
-        {/* Roof lines */}
-        <rect x={0} y={36} width={200} height={4} fill="#5d4037" />
+        <polygon points="100,0 0,80 200,80" fill="#6d4c41" />
+        <polygon points="100,2 10,80 190,80" fill="#795548" />
+        <polygon points="100,6 20,80 180,80" fill="#8d6e63" />
+        {/* Horizontal tile lines */}
+        <line x1={30} y1={40} x2={170} y2={40} stroke="#5d4037" strokeWidth={1.5} />
+        <line x1={15} y1={60} x2={185} y2={60} stroke="#5d4037" strokeWidth={1.5} />
+        {/* Roof ridge */}
+        <rect x={0} y={76} width={200} height={4} fill="#5d4037" />
         {/* Window in attic */}
-        <rect x={90} y={20} width={20} height={16} fill="#3e2723" />
-        <rect x={92} y={22} width={16} height={12} fill="#4fc3f7" opacity={0.6} />
-        <rect x={99} y={22} width={2} height={12} fill="#5d4037" />
-        <rect x={92} y={27} width={16} height={2} fill="#5d4037" />
+        <rect x={85} y={40} width={30} height={30} rx={15} fill="#3e2723" />
+        <rect x={88} y={43} width={24} height={24} rx={12} fill="#4fc3f7" opacity={0.6} />
+        <rect x={99} y={43} width={2} height={24} fill="#5d4037" />
+        <rect x={88} y={54} width={24} height={2} fill="#5d4037" />
       </svg>
       {/* Overhang / eaves */}
       <div style={{
