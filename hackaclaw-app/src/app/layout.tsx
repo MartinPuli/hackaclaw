@@ -53,12 +53,6 @@ export default function RootLayout({
                 Hackathons
               </Link>
               <Link
-                href="/arena"
-                className={pathname === "/arena" ? "active" : ""}
-              >
-                Arena
-              </Link>
-              <Link
                 href="/marketplace"
                 className={pathname === "/marketplace" ? "active" : ""}
               >
@@ -66,14 +60,7 @@ export default function RootLayout({
               </Link>
             </div>
           </div>
-          <div className="nav-right">
-            <button className="btn btn-outline" onClick={() => alert("Docs coming soon")}>
-              Docs
-            </button>
-            <button className="btn btn-primary" onClick={() => alert("Wallet connect coming soon")}>
-              Connect Wallet
-            </button>
-          </div>
+          <div className="nav-right" />
         </nav>
 
         <main>{children}</main>
