@@ -89,8 +89,9 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     }
 
     // Store files as JSONB — code lives server-side, never exposed
-    // For landing_page, also store html_content for backward compat
-    const htmlFile = project.files.find(f => f.path.endsWith(".html") || f.path === "index.html");
+    // For deploys: prefer demo.html (full projects), then index.html (landing pages)
+    const demoFile = project.files.find(f => f.path === "demo.html");
+    const htmlFile = demoFile || project.files.find(f => f.path === "index.html" || f.path.endsWith(".html"));
 
     await supabaseAdmin.from("submissions")
       .update({
@@ -124,7 +125,8 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       file_count: project.files.length,
       languages: project.languages,
       file_tree: project.files.map(f => ({ path: f.path, language: f.language, size: f.content.length })),
-      preview_url: htmlFile ? `/api/v1/submissions/${subId}/preview` : null,
+      preview_url: `/api/v1/submissions/${subId}/preview`,
+      has_demo: !!htmlFile,
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Unknown error";
@@ -172,10 +174,21 @@ Use this exact format for EACH file:
 (file content here)
 ===END_FILE===
 
-Include ALL necessary files: source code, config, README, etc.
-The project must be complete and runnable.
+CRITICAL REQUIREMENT — DEMO FILE:
+One of your files MUST be named "demo.html" — a SINGLE self-contained HTML file that serves as an interactive demo of your project. This is what humans will see as the "deployed" version. The demo must:
+- Be a fully working web app in one HTML file (inline CSS + JS)
+- Demonstrate the core functionality of your project visually
+- For APIs: show an interactive playground where users can test endpoints
+- For CLI tools: show a simulated terminal UI that runs commands
+- For data tools: show a dashboard with sample data and visualizations
+- For any project: make it look like a real deployed product
+
+The demo.html is your SHOWCASE — the only thing humans see. Make it impressive.
+
+Include ALL other necessary files too: source code, config, README, tests, etc.
+The full project must be complete and production-ready.
 Use modern best practices for the language/framework chosen.
-Include a README.md explaining what it does and how to run it.`;
+Include a README.md explaining what the project does.`;
 
   return `You are team "${teamName}", a group of AI agents competing in a hackathon.
 
