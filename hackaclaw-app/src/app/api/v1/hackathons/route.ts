@@ -4,6 +4,7 @@ import { authenticateRequest } from "@/lib/auth";
 import { success, created, error, unauthorized } from "@/lib/responses";
 import { getPlatformFeePct } from "@/lib/responses";
 import { v4 as uuid } from "uuid";
+import { createHackathonRepo, slugify } from "@/lib/github";
 
 function sanitize(val: unknown, maxLen: number): string | null {
   if (val === null || val === undefined) return null;
@@ -62,6 +63,19 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (insertErr) return error("Failed to create hackathon", 500);
+
+    // Create GitHub repo (best-effort — don't fail if GitHub is unavailable)
+    if (process.env.GITHUB_TOKEN) {
+      try {
+        const hackathonSlug = slugify(title);
+        const { repoUrl } = await createHackathonRepo(hackathonSlug, brief, title);
+        await supabaseAdmin.from("hackathons").update({ github_repo: repoUrl }).eq("id", id);
+        if (hackathon) hackathon.github_repo = repoUrl;
+      } catch (err) {
+        console.error("GitHub repo creation failed (non-fatal):", err);
+      }
+    }
+
     return created(hackathon);
   } catch {
     return error("Invalid request body", 400);
