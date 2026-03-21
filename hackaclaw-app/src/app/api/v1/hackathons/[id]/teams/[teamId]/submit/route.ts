@@ -11,7 +11,8 @@ type RouteParams = { params: Promise<{ id: string; teamId: string }> };
 
 /**
  * POST /api/v1/hackathons/:id/teams/:teamId/submit
- * Trigger agent build + submit. Only team members can submit.
+ * Trigger agent build + submit. The AI generates a full project.
+ * The code is stored server-side and NEVER exposed to humans.
  */
 export async function POST(req: NextRequest, { params }: RouteParams) {
   const agent = await authenticateRequest(req);
@@ -27,21 +28,19 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     .from("teams").select("*").eq("id", teamId).eq("hackathon_id", hackathonId).single();
   if (!team) return notFound("Team");
 
-  // Verify agent is in team
   const { data: membership } = await supabaseAdmin
     .from("team_members").select("*").eq("team_id", teamId).eq("agent_id", agent.id).single();
   if (!membership) return error("You are not a member of this team", 403);
 
-  // Check if already submitted
   const { data: existingSub } = await supabaseAdmin
     .from("submissions").select("id").eq("team_id", teamId).eq("hackathon_id", hackathonId).single();
   if (existingSub) return error("Team has already submitted", 409);
 
-  // Create submission
   const subId = uuid();
   await supabaseAdmin.from("submissions").insert({
     id: subId, team_id: teamId, hackathon_id: hackathonId,
     status: "building", started_at: new Date().toISOString(),
+    project_type: hackathon.challenge_type || "landing_page",
   });
 
   await supabaseAdmin.from("teams").update({ status: "building" }).eq("id", teamId);
@@ -52,7 +51,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     event_data: { submission_id: subId },
   });
 
-  // Get team members for build
+  // Get team members
   const { data: members } = await supabaseAdmin
     .from("team_members")
     .select("role, agents(name, personality, strategy, model)")
@@ -60,45 +59,48 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
   const flatMembers = (members || []).map((m: Record<string, unknown>) => {
     const a = m.agents as Record<string, unknown> | null;
-    return { name: a?.name, personality: a?.personality, strategy: a?.strategy, model: a?.model, role: m.role };
+    return { name: a?.name as string, personality: a?.personality as string, strategy: a?.strategy as string, role: m.role as string };
   });
 
   try {
-    const systemPrompt = buildSystemPrompt(flatMembers as MemberInfo[], team.name);
-    const userPrompt = buildUserPrompt(hackathon.brief);
+    const challengeType = hackathon.challenge_type || "landing_page";
+    const systemPrompt = buildSystemPrompt(flatMembers, team.name, challengeType);
+    const userPrompt = buildUserPrompt(hackathon.brief, challengeType);
 
     const response = await genai.models.generateContent({
       model: "gemini-2.0-flash",
       contents: userPrompt,
       config: {
         systemInstruction: systemPrompt,
-        maxOutputTokens: 16000,
+        maxOutputTokens: 32000,
         temperature: 0.8,
       },
     });
 
     const text = response?.text || "";
-    const htmlContent = extractHTML(text);
+    const project = parseProjectOutput(text, challengeType);
 
-    if (!htmlContent) {
+    if (!project || project.files.length === 0) {
       await supabaseAdmin.from("submissions")
-        .update({ status: "failed", build_log: "Failed to generate valid HTML", completed_at: new Date().toISOString() })
+        .update({ status: "failed", build_log: "Failed to generate valid project", completed_at: new Date().toISOString() })
         .eq("id", subId);
       await supabaseAdmin.from("teams").update({ status: "submitted" }).eq("id", teamId);
-
-      await supabaseAdmin.from("activity_log").insert({
-        id: uuid(), hackathon_id: hackathonId, team_id: teamId,
-        agent_id: agent.id, event_type: "build_failed",
-        event_data: { error: "No HTML output" },
-      });
-
-      return error("Build failed: no valid HTML generated", 500);
+      return error("Build failed: no valid output generated", 500);
     }
+
+    // Store files as JSONB — code lives server-side, never exposed
+    // For landing_page, also store html_content for backward compat
+    const htmlFile = project.files.find(f => f.path.endsWith(".html") || f.path === "index.html");
 
     await supabaseAdmin.from("submissions")
       .update({
-        status: "completed", html_content: htmlContent,
-        build_log: `Built by team ${team.name}. ${flatMembers.length} agent(s) contributed.`,
+        status: "completed",
+        html_content: htmlFile?.content || null,
+        files: project.files,
+        file_count: project.files.length,
+        languages: project.languages,
+        project_type: challengeType,
+        build_log: `Built by team ${team.name}. ${flatMembers.length} agent(s). ${project.files.length} files. Languages: ${project.languages.join(", ")}.`,
         completed_at: new Date().toISOString(),
       })
       .eq("id", subId);
@@ -108,14 +110,21 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     await supabaseAdmin.from("activity_log").insert({
       id: uuid(), hackathon_id: hackathonId, team_id: teamId,
       agent_id: agent.id, event_type: "build_completed",
-      event_data: { submission_id: subId, html_length: htmlContent.length },
+      event_data: {
+        submission_id: subId,
+        file_count: project.files.length,
+        languages: project.languages,
+        total_chars: project.files.reduce((s, f) => s + f.content.length, 0),
+      },
     });
 
     return success({
       submission_id: subId,
       status: "completed",
-      html_length: htmlContent.length,
-      preview_url: `/api/v1/submissions/${subId}/preview`,
+      file_count: project.files.length,
+      languages: project.languages,
+      file_tree: project.files.map(f => ({ path: f.path, language: f.language, size: f.content.length })),
+      preview_url: htmlFile ? `/api/v1/submissions/${subId}/preview` : null,
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Unknown error";
@@ -127,43 +136,151 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   }
 }
 
-interface MemberInfo { name: string; personality: string; strategy: string; role: string }
+// ─── Project types ───
 
-function buildSystemPrompt(members: MemberInfo[], teamName: string): string {
+interface ProjectFile {
+  path: string;
+  content: string;
+  language: string;
+}
+
+interface ParsedProject {
+  files: ProjectFile[];
+  languages: string[];
+}
+
+// ─── Prompts ───
+
+function buildSystemPrompt(members: { name: string; personality: string; strategy: string; role: string }[], teamName: string, challengeType: string): string {
   const memberDescriptions = members.map(m =>
     `- ${m.name} (${m.role})${m.personality ? `: ${m.personality}` : ""}${m.strategy ? ` | Strategy: ${m.strategy}` : ""}`
   ).join("\n");
+
+  const projectGuidelines = challengeType === "landing_page"
+    ? `OUTPUT FORMAT:
+You must output a SINGLE self-contained HTML file.
+- ALL CSS in a <style> tag
+- ALL JavaScript in a <script> tag
+- NO external dependencies (except Google Fonts via @import)
+- Must be responsive (mobile + desktop)
+- Include smooth animations and micro-interactions`
+    : `OUTPUT FORMAT:
+You must output a COMPLETE PROJECT with multiple files.
+Use this exact format for EACH file:
+
+===FILE: path/to/file.ext===
+(file content here)
+===END_FILE===
+
+Include ALL necessary files: source code, config, README, etc.
+The project must be complete and runnable.
+Use modern best practices for the language/framework chosen.
+Include a README.md explaining what it does and how to run it.`;
 
   return `You are team "${teamName}", a group of AI agents competing in a hackathon.
 
 TEAM MEMBERS:
 ${memberDescriptions}
 
-Combine the strengths of all team members. You are world-class web developers and designers.
-Your goal is to WIN this competition by building the BEST landing page possible.
+You are world-class software engineers. Your goal is to WIN by building the BEST project.
+
+${projectGuidelines}
 
 CRITICAL RULES:
-- Output ONLY a single, complete, self-contained HTML file
-- ALL CSS must be inline in a <style> tag
-- ALL JavaScript must be inline in a <script> tag
-- NO external dependencies, CDNs, or imports (except Google Fonts via @import in CSS)
-- The page MUST be responsive (mobile + desktop)
-- The page MUST be visually stunning and professional
-- Include smooth animations and micro-interactions
-- Use a cohesive, modern color palette
-- Make the CTA impossible to ignore
+- Write clean, production-quality code
+- Use proper error handling
+- Follow best practices for the language/framework
+- Make it impressive — you are competing against other AI teams
+- Your code quality, architecture, and completeness will be judged
 
-You are competing against other teams. Make this your BEST work.`;
+This is your BEST work. Make it count.`;
 }
 
-function buildUserPrompt(brief: string): string {
-  return `BUILD THIS NOW. Here is your challenge brief:
+function buildUserPrompt(brief: string, challengeType: string): string {
+  if (challengeType === "landing_page") {
+    return `BUILD THIS NOW. Here is your challenge brief:
 
 ---
 ${brief}
 ---
 
-Respond with ONLY the complete HTML file. No explanations, no markdown. Just raw HTML from <!DOCTYPE html> to </html>.`;
+Respond with ONLY the complete HTML file. No explanations. Just raw HTML from <!DOCTYPE html> to </html>.`;
+  }
+
+  return `BUILD THIS PROJECT NOW. Here is your challenge brief:
+
+---
+${brief}
+---
+
+Output ALL files using the ===FILE: path=== / ===END_FILE=== format.
+Include every file needed for a complete, working project.
+Start with the main source files, then config, then README.md.
+No explanations outside of files. Just the files.`;
+}
+
+// ─── Parsing ───
+
+function parseProjectOutput(text: string, challengeType: string): ParsedProject | null {
+  if (challengeType === "landing_page") {
+    const html = extractHTML(text);
+    if (!html) return null;
+    return {
+      files: [{ path: "index.html", content: html, language: "html" }],
+      languages: ["html"],
+    };
+  }
+
+  // Multi-file project parsing
+  const files: ProjectFile[] = [];
+  const fileRegex = /===FILE:\s*(.+?)===\s*\n([\s\S]*?)===END_FILE===/g;
+  let match;
+
+  while ((match = fileRegex.exec(text)) !== null) {
+    const filePath = match[1].trim();
+    const content = match[2].trim();
+    if (filePath && content) {
+      files.push({
+        path: filePath,
+        content,
+        language: detectLanguage(filePath),
+      });
+    }
+  }
+
+  // Fallback: if no ===FILE=== markers, try code blocks
+  if (files.length === 0) {
+    const codeBlocks = text.matchAll(/```(\w+)?\s*\n([\s\S]*?)```/g);
+    let idx = 0;
+    for (const block of codeBlocks) {
+      const lang = block[1] || "txt";
+      const content = block[2].trim();
+      if (content.length > 20) {
+        files.push({
+          path: `file_${idx}.${langToExt(lang)}`,
+          content,
+          language: lang,
+        });
+        idx++;
+      }
+    }
+  }
+
+  // Fallback for plain HTML
+  if (files.length === 0) {
+    const html = extractHTML(text);
+    if (html) {
+      return {
+        files: [{ path: "index.html", content: html, language: "html" }],
+        languages: ["html"],
+      };
+    }
+  }
+
+  if (files.length === 0) return null;
+
+  const languages = [...new Set(files.map(f => f.language))];
+  return { files, languages };
 }
 
 function extractHTML(text: string): string | null {
@@ -175,4 +292,27 @@ function extractHTML(text: string): string | null {
   if (htmlMatch2) return htmlMatch2[1].trim();
   if (text.trim().startsWith("<!DOCTYPE") || text.trim().startsWith("<html")) return text.trim();
   return null;
+}
+
+function detectLanguage(filePath: string): string {
+  const ext = filePath.split(".").pop()?.toLowerCase() || "";
+  const map: Record<string, string> = {
+    ts: "typescript", tsx: "typescript", js: "javascript", jsx: "javascript",
+    py: "python", rs: "rust", go: "go", java: "java", kt: "kotlin",
+    rb: "ruby", php: "php", cs: "csharp", cpp: "cpp", c: "c",
+    html: "html", css: "css", scss: "scss", json: "json", yaml: "yaml",
+    yml: "yaml", toml: "toml", md: "markdown", sql: "sql", sh: "shell",
+    dockerfile: "docker", sol: "solidity", swift: "swift",
+  };
+  return map[ext] || ext || "text";
+}
+
+function langToExt(lang: string): string {
+  const map: Record<string, string> = {
+    typescript: "ts", javascript: "js", python: "py", rust: "rs",
+    go: "go", java: "java", ruby: "rb", php: "php", html: "html",
+    css: "css", json: "json", yaml: "yml", markdown: "md", sql: "sql",
+    shell: "sh", bash: "sh", solidity: "sol",
+  };
+  return map[lang] || lang;
 }

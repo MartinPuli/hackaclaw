@@ -18,17 +18,14 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     .from("hackathons").select("*").eq("id", hackathonId).single();
   if (!hackathon) return notFound("Hackathon");
 
-  // Get completed submissions without evaluations
   const { data: allSubs } = await supabaseAdmin
     .from("submissions")
     .select("*, teams(name)")
     .eq("hackathon_id", hackathonId)
     .eq("status", "completed");
 
-  // Filter out already-evaluated ones
   const { data: evaluatedIds } = await supabaseAdmin
-    .from("evaluations")
-    .select("submission_id");
+    .from("evaluations").select("submission_id");
 
   const evaluatedSet = new Set((evaluatedIds || []).map(e => e.submission_id));
   const submissions = (allSubs || []).filter(s => !evaluatedSet.has(s.id));
@@ -45,16 +42,14 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
   for (const sub of submissions) {
     try {
-      const judgePrompt = buildJudgePrompt(hackathon.brief, sub.html_content);
+      const isFullProject = sub.project_type !== "landing_page" && sub.files && (sub.files as unknown[]).length > 1;
+      const judgePrompt = buildJudgePrompt(hackathon.brief, sub, isFullProject);
+      const systemPrompt = isFullProject ? JUDGE_PROJECT_PROMPT : JUDGE_LANDING_PROMPT;
 
       const response = await genai.models.generateContent({
         model: "gemini-2.0-flash",
         contents: judgePrompt,
-        config: {
-          systemInstruction: JUDGE_SYSTEM_PROMPT,
-          maxOutputTokens: 4000,
-          temperature: 0.3,
-        },
+        config: { systemInstruction: systemPrompt, maxOutputTokens: 4000, temperature: 0.3 },
       });
 
       const text = response?.text || "";
@@ -68,7 +63,9 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       const evalId = uuid();
       const totalScore = Math.round(
         (scores.functionality + scores.brief_compliance + scores.visual_quality +
-         scores.cta_quality + scores.copy_clarity + scores.completeness) / 6
+         scores.cta_quality + scores.copy_clarity + scores.completeness +
+         (scores.code_quality || 0) + (scores.architecture || 0)) /
+        (isFullProject ? 8 : 6)
       );
 
       await supabaseAdmin.from("evaluations").insert({
@@ -79,6 +76,8 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
         cta_quality_score: scores.cta_quality,
         copy_clarity_score: scores.copy_clarity,
         completeness_score: scores.completeness,
+        code_quality_score: scores.code_quality || 0,
+        architecture_score: scores.architecture || 0,
         total_score: totalScore,
         judge_feedback: scores.feedback,
         raw_response: text,
@@ -100,21 +99,13 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     }
   }
 
-  // If all judged, mark hackathon completed
+  // Check if all judged
   const { data: remaining } = await supabaseAdmin
-    .from("submissions")
-    .select("id")
-    .eq("hackathon_id", hackathonId)
-    .eq("status", "completed");
-
+    .from("submissions").select("id").eq("hackathon_id", hackathonId).eq("status", "completed");
   const { data: evalDone } = await supabaseAdmin
-    .from("evaluations")
-    .select("submission_id");
-
+    .from("evaluations").select("submission_id");
   const evalSet = new Set((evalDone || []).map(e => e.submission_id));
-  const allJudged = (remaining || []).every(s => evalSet.has(s.id));
-
-  if (allJudged) {
+  if ((remaining || []).every(s => evalSet.has(s.id))) {
     await supabaseAdmin.from("hackathons")
       .update({ status: "completed", updated_at: new Date().toISOString() })
       .eq("id", hackathonId);
@@ -133,14 +124,13 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     .from("hackathons").select("id").eq("id", hackathonId).single();
   if (!hackathon) return notFound("Hackathon");
 
-  // Get all teams with submissions and evaluations
   const { data: teams } = await supabaseAdmin
     .from("teams").select("*").eq("hackathon_id", hackathonId);
 
   const ranked = await Promise.all(
     (teams || []).map(async (team) => {
       const { data: sub } = await supabaseAdmin
-        .from("submissions").select("*")
+        .from("submissions").select("id, status, project_type, file_count, languages")
         .eq("team_id", team.id).eq("hackathon_id", hackathonId).single();
 
       let evaluation = null;
@@ -157,17 +147,16 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 
       const flatMembers = (members || []).map((m: Record<string, unknown>) => {
         const a = m.agents as Record<string, unknown> | null;
-        return {
-          ...m, agents: undefined,
-          agent_name: a?.name, agent_display_name: a?.display_name,
-          agent_avatar_url: a?.avatar_url,
-        };
+        return { ...m, agents: undefined, agent_name: a?.name, agent_display_name: a?.display_name, agent_avatar_url: a?.avatar_url };
       });
 
       return {
         team_id: team.id, team_name: team.name, team_color: team.color,
         floor_number: team.floor_number, status: team.status,
         submission_id: sub?.id || null, submission_status: sub?.status || null,
+        project_type: sub?.project_type || null,
+        file_count: sub?.file_count || null,
+        languages: sub?.languages || null,
         total_score: evaluation?.total_score ?? null,
         functionality_score: evaluation?.functionality_score ?? null,
         brief_compliance_score: evaluation?.brief_compliance_score ?? null,
@@ -175,31 +164,25 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
         cta_quality_score: evaluation?.cta_quality_score ?? null,
         copy_clarity_score: evaluation?.copy_clarity_score ?? null,
         completeness_score: evaluation?.completeness_score ?? null,
+        code_quality_score: evaluation?.code_quality_score ?? null,
+        architecture_score: evaluation?.architecture_score ?? null,
         judge_feedback: evaluation?.judge_feedback ?? null,
         members: flatMembers,
       };
     })
   );
 
-  // Sort by score descending
   ranked.sort((a, b) => (b.total_score ?? -1) - (a.total_score ?? -1));
-
   return success(ranked);
 }
 
-const JUDGE_SYSTEM_PROMPT = `You are the AI Judge for a hackathon competition. You evaluate landing pages with STRICT, FAIR, and CONSISTENT criteria.
+// ─── Judge prompts ───
 
-Be OBJECTIVE, STRICT, and DETAILED. Average work gets 50-65. A score of 100 is nearly impossible.
+const JUDGE_LANDING_PROMPT = `You are the AI Judge for a hackathon. You evaluate landing pages strictly and fairly.
 
-Score each criterion 0-100:
-- 0-30: Major failures
-- 31-50: Below average
-- 51-65: Average, meets basics
-- 66-80: Good
-- 81-90: Excellent
-- 91-100: Exceptional
+Score each criterion 0-100. Average work gets 50-65. 100 is nearly impossible.
 
-Respond in this EXACT JSON format:
+Respond in EXACT JSON:
 {
   "functionality": <score>,
   "brief_compliance": <score>,
@@ -210,16 +193,47 @@ Respond in this EXACT JSON format:
   "feedback": "<2-3 sentence assessment>"
 }`;
 
-function buildJudgePrompt(brief: string, html: string): string {
-  return `JUDGE THIS SUBMISSION.
+const JUDGE_PROJECT_PROMPT = `You are the AI Judge for a hackathon. You evaluate full software projects strictly and fairly.
 
-ORIGINAL BRIEF:
-${brief}
+Score each criterion 0-100. Average work gets 50-65. 100 is nearly impossible.
 
-SUBMITTED HTML:
-${html.substring(0, 12000)}
+Respond in EXACT JSON:
+{
+  "functionality": <score>,
+  "brief_compliance": <score>,
+  "visual_quality": <score>,
+  "cta_quality": <score>,
+  "copy_clarity": <score>,
+  "completeness": <score>,
+  "code_quality": <score>,
+  "architecture": <score>,
+  "feedback": "<2-3 sentence assessment>"
+}
 
-Evaluate against ALL criteria. Respond ONLY with JSON.`;
+CRITERIA:
+- functionality: Does it work? Features complete? Error handling?
+- brief_compliance: Does it match what was asked for?
+- visual_quality: Design, UI, UX (if applicable). For CLI/APIs, judge the output format.
+- cta_quality: For web: CTA quality. For APIs/tools: developer experience and documentation.
+- copy_clarity: Documentation, README, comments, naming conventions.
+- completeness: All required features present? Edge cases handled?
+- code_quality: Clean code, proper patterns, no anti-patterns, good naming, DRY.
+- architecture: Project structure, separation of concerns, scalability, config management.`;
+
+function buildJudgePrompt(brief: string, sub: Record<string, unknown>, isFullProject: boolean): string {
+  if (!isFullProject) {
+    const html = (sub.html_content as string) || "";
+    return `JUDGE THIS SUBMISSION.\n\nORIGINAL BRIEF:\n${brief}\n\nSUBMITTED HTML:\n${html.substring(0, 12000)}\n\nEvaluate against ALL criteria. Respond ONLY with JSON.`;
+  }
+
+  // For full projects, send file tree + content (truncated per file)
+  const files = (sub.files || []) as { path: string; content: string; language: string }[];
+  const filesSummary = files.map(f => {
+    const truncated = f.content.length > 3000 ? f.content.substring(0, 3000) + "\n...(truncated)" : f.content;
+    return `\n--- ${f.path} (${f.language}) ---\n${truncated}`;
+  }).join("\n");
+
+  return `JUDGE THIS PROJECT.\n\nORIGINAL BRIEF:\n${brief}\n\nPROJECT FILES (${files.length} files):\n${filesSummary.substring(0, 28000)}\n\nEvaluate against ALL 8 criteria. Respond ONLY with JSON.`;
 }
 
 interface JudgeScores {
@@ -229,6 +243,8 @@ interface JudgeScores {
   cta_quality: number;
   copy_clarity: number;
   completeness: number;
+  code_quality?: number;
+  architecture?: number;
   feedback: string;
 }
 
@@ -244,6 +260,8 @@ function parseJudgeResponse(text: string): JudgeScores | null {
       cta_quality: clamp(parsed.cta_quality),
       copy_clarity: clamp(parsed.copy_clarity),
       completeness: clamp(parsed.completeness),
+      code_quality: parsed.code_quality !== undefined ? clamp(parsed.code_quality) : undefined,
+      architecture: parsed.architecture !== undefined ? clamp(parsed.architecture) : undefined,
       feedback: parsed.feedback || "No feedback.",
     };
   } catch { return null; }
