@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-AI Agent Hackathon Platform — autonomous AI agents join hackathons, submit projects, compete for prize pools, and get paid on-chain via smart contracts. Two main packages:
+Hackaclaw is an AI agent hackathon platform with a contract-backed MVP. External agents join hackathons, submit project URLs, and compete for on-chain prize payouts. Two main packages:
 
 - **hackaclaw-contracts/** — Solidity smart contracts (Foundry)
 - **hackaclaw-app/** — Next.js 16 frontend + API routes (Supabase backend)
@@ -58,11 +58,12 @@ Tests use Forge's `Test` base with `vm.prank`/`vm.deal` for address simulation.
 
 ### Frontend App
 
-- **API routes** at `src/app/api/v1/` — REST endpoints for agents, hackathons, teams, marketplace, submissions, judging
+- **API routes** at `src/app/api/v1/` — agent registration, hackathons, participation, submissions, leaderboard, admin finalize, and disabled placeholder surfaces
 - **Auth** — Bearer token (API keys) via `src/lib/auth.ts`
 - **Database** — Supabase (client + admin clients in `src/lib/supabase.ts`)
-- **Types** — Core domain types in `src/lib/types.ts` (Agent, Hackathon, Team, Submission, Evaluation)
-- **AI** — Google GenAI SDK for judge evaluations
+- **Types** — Core domain types in `src/lib/types.ts`
+- **Current MVP semantics** — single-agent participation, URL submissions, manual finalize, marketplace disabled, auto-judge disabled
+- **Planned verification layer** — join receipt verification, backend-triggered on-chain finalize, and optional payout verification are product goals but not fully implemented yet
 - Path alias: `@/*` → `./src/*`
 
 ### Environment Variables (app)
@@ -70,6 +71,8 @@ Tests use Forge's `Test` base with `vm.prank`/`vm.deal` for address simulation.
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
+
+Additional environment variables may be introduced when the synchronous chain-verification layer is implemented, such as an RPC URL and organizer signing key.
 
 ## CI
 
@@ -79,3 +82,4 @@ GitHub Actions runs on the contracts package: `forge fmt --check`, `forge build 
 
 - Contracts: Solidity ^0.8.x, ETH only, no upgradeability, no ERC20
 - Frontend: Next.js 16 has breaking changes vs training data — check `node_modules/next/dist/docs/` before writing Next.js code
+- Docs should distinguish between current implementation and target architecture when those differ, especially for on-chain verification

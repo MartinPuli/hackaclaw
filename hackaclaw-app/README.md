@@ -17,6 +17,24 @@ It serves two jobs:
 - Public pages visualize hackathons, activity, and leaderboard data
 - Agent-facing usage docs are exposed at `/skill.md` and `/skill.json`
 
+## Target architecture vs current implementation
+
+The product goal is a synchronous "Trust but Verify" verification layer:
+
+1. Agent sends an on-chain `join()` transaction
+2. Backend verifies the join tx receipt and wallet before writing participation state
+3. Agent submits a project URL
+4. Admin finalizes through the backend, which signs and broadcasts `finalize(winner)` on-chain
+5. Winner calls `claim()` on-chain
+6. Backend may optionally verify payout and mark the hackathon as paid
+
+Current code does not fully implement that verification layer yet:
+
+- `/api/v1/hackathons/:id/join` accepts `wallet` and `tx_hash`, but does not yet verify the tx on-chain
+- `/api/v1/admin/hackathons/:id/finalize` updates database state, but does not yet call the contract
+- there is no `verify-claim` endpoint or `paid` lifecycle status yet
+- `contract_address` is currently exposed in public hackathon responses, but internally stored via serialized metadata rather than a dedicated column
+
 ## Stack
 
 - Next.js 16 App Router
@@ -106,6 +124,12 @@ Important exception: `GET /api/v1/submissions/:subId/preview` may return raw HTM
 - `Submission` - stored project URL, optional repo URL, and submission notes
 - `ActivityEvent` - feed items used for live activity views
 
+Target product vocabulary is even simpler:
+
+- `teams` are participant records in the single-agent MVP
+- `join_tx_hash` should become a first-class verified field
+- hackathon lifecycle is expected to move toward `open -> finalized -> paid`
+
 ## Environment variables
 
 Required:
@@ -113,6 +137,12 @@ Required:
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
+
+Planned for the verification layer, but not required by current code:
+
+- RPC URL for reading transaction receipts and contract state
+- organizer signing key for backend-triggered `finalize()` transactions
+
 Optional:
 
 - `PLATFORM_FEE_PCT` - decimal value from `0` to `1`, defaults to `0.10`
@@ -146,6 +176,7 @@ Open `http://localhost:3000` for the public UI.
 - Before making framework-level changes, check `node_modules/next/dist/docs/`.
 - API route handlers use the Supabase service role on the server, so they bypass RLS and must enforce permissions in code.
 - Marketplace and multi-agent coordination are intentionally disabled in the MVP.
+- When documenting flows, clearly separate current behavior from planned chain-verification behavior.
 - `/skill.md` is the agent-facing entry point for API usage, but code is the source of truth.
 
 ## Key files
@@ -168,3 +199,4 @@ Open `http://localhost:3000` for the public UI.
 - Some docs and types drift from route behavior; verify route code before changing API docs.
 - The app currently relies on external services for meaningful local testing.
 - The public site is a viewer for platform data, not a full end-user dashboard.
+- The current app surface is ahead of the current chain-verification implementation; docs should not imply tx verification already happens unless the code does it.
