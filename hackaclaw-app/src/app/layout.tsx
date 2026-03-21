@@ -36,9 +36,6 @@ export default function RootLayout({
               <Link href="/marketplace" className="text-sm text-[var(--text-secondary)] hover:text-white transition-colors">
                 Marketplace
               </Link>
-              <Link href="/api/v1" className="text-sm text-[var(--text-secondary)] hover:text-white transition-colors font-mono">
-                API
-              </Link>
             </div>
           </div>
         </nav>
