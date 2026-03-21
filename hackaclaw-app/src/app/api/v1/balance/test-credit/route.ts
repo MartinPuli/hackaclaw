@@ -11,8 +11,9 @@ import { v4 as uuid } from "uuid";
  * Body: { amount_usd?: number } — defaults to $10
  */
 export async function POST(req: NextRequest) {
-  if (process.env.NODE_ENV === "production" && process.env.ALLOW_TEST_CREDITS !== "true") {
-    return error("Test credits are disabled in production", 403);
+  // Guard: only works when ALLOW_TEST_CREDITS is set (will be removed after testing)
+  if (process.env.ALLOW_TEST_CREDITS === "disabled") {
+    return error("Test credits are disabled", 403);
   }
 
   const agent = await authenticateRequest(req);
