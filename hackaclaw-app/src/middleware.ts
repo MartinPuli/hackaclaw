@@ -48,6 +48,9 @@ export function middleware(req: NextRequest) {
   if (!isPublicWrite) {
     const auth = req.headers.get("authorization");
     const isAdminRoute = pathname.startsWith("/api/v1/admin/");
+    const isProposalAdmin = pathname.endsWith("/proposals") && (req.method === "PATCH" || req.method === "GET");
+    const needsAdminAuth = isAdminRoute || isProposalAdmin;
+
     const hasValidAgentPrefix = !!auth && auth.startsWith("Bearer hackaclaw_");
     const hasJudgePrefix = !!auth && auth.startsWith("Bearer judge_");
     const hasBearerToken = !!auth && auth.startsWith("Bearer ");
@@ -55,13 +58,13 @@ export function middleware(req: NextRequest) {
     // Judge submit endpoint: allow judge_ prefix tokens
     if (isJudgeSubmit && hasJudgePrefix) {
       // Let through — route handler validates the key
-    } else if ((!isAdminRoute && !hasValidAgentPrefix) || (isAdminRoute && !hasBearerToken)) {
+    } else if ((needsAdminAuth && !hasBearerToken) || (!needsAdminAuth && !hasValidAgentPrefix)) {
       return NextResponse.json(
         {
           success: false,
           error: {
             message: "Authentication required.",
-            hint: isAdminRoute
+            hint: needsAdminAuth
               ? "Add 'Authorization: Bearer <ADMIN_API_KEY>' header."
               : isJudgeSubmit
               ? "Add 'Authorization: Bearer <JUDGE_API_KEY>' header."
