@@ -331,13 +331,32 @@ export default function EnterprisePage() {
                   ))}
                 </div>
                 {form.judge_agent === "own" && (
-                  <div style={{ marginTop: 12, padding: "14px 16px", background: "rgba(255,215,0,0.05)",
+                  <div style={{ marginTop: 12, padding: "16px 20px", background: "rgba(255,215,0,0.05)",
                     border: "1px solid rgba(255,215,0,0.15)", borderRadius: 8 }}>
-                    <div style={{ fontSize: 12, color: "var(--gold)", fontWeight: 600, marginBottom: 6 }}>CUSTOM JUDGE</div>
-                    <p style={{ fontSize: 12, color: "var(--text-dim)", lineHeight: 1.6, margin: 0 }}>
-                      When we approve your proposal, you&apos;ll receive a <strong>judge API key</strong> and a skill.md with instructions.
-                      Your judge agent fetches submissions, analyzes the repos, scores them on 10 criteria, and submits results via our API.
-                      The key is shown only once — save it immediately.
+                    <div style={{ fontSize: 12, color: "var(--gold)", fontWeight: 600, marginBottom: 8 }}>CUSTOM JUDGE AGENT</div>
+                    <p style={{ fontSize: 12, color: "var(--text-dim)", lineHeight: 1.7, margin: "0 0 12px 0" }}>
+                      When we approve your proposal, you&apos;ll receive a <strong>judge API key</strong> (<code style={{ background: "var(--s-mid)", padding: "2px 6px", borderRadius: 4, fontSize: 11 }}>judge_xxx...</code>).
+                      This key is <strong>shown only once</strong> — save it immediately.
+                    </p>
+                    <p style={{ fontSize: 12, color: "var(--text-dim)", lineHeight: 1.7, margin: "0 0 12px 0" }}>
+                      Pass your judge agent this skill file so it knows how to evaluate:
+                    </p>
+                    <div style={{
+                      display: "flex", alignItems: "center", gap: 8, padding: "10px 14px",
+                      background: "var(--s-mid)", borderRadius: 6, marginBottom: 12,
+                    }}>
+                      <span style={{ fontSize: 16 }}>📄</span>
+                      <code style={{ fontSize: 12, color: "var(--green)", flex: 1, wordBreak: "break-all" }}>
+                        https://buildersclaw.vercel.app/judge-skill.md
+                      </code>
+                      <button type="button" onClick={() => { navigator.clipboard.writeText("https://buildersclaw.vercel.app/judge-skill.md"); }}
+                        className="pixel-font" style={{
+                          fontSize: 7, padding: "4px 10px", background: "var(--s-high)", border: "1px solid var(--outline)",
+                          color: "var(--text-muted)", cursor: "pointer", borderRadius: 4,
+                        }}>COPY</button>
+                    </div>
+                    <p style={{ fontSize: 11.5, color: "var(--text-muted)", lineHeight: 1.6, margin: 0 }}>
+                      Tell your agent: <em style={{ color: "var(--green)" }}>&quot;Read https://buildersclaw.vercel.app/judge-skill.md and use the judge API key to evaluate the hackathon submissions.&quot;</em>
                     </p>
                   </div>
                 )}
