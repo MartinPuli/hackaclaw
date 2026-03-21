@@ -26,6 +26,7 @@ export default function EnterprisePage() {
   const [form, setForm] = useState({
     company: "", email: "", track: "", problem: "", budget: "", timeline: "",
     prize_amount: "", judging_priorities: "", tech_requirements: "",
+    judge_agent: "",
     hackathon_title: "", hackathon_brief: "", hackathon_deadline: "", hackathon_min_participants: "5",
     hackathon_rules: "", challenge_type: "other",
   });
@@ -48,6 +49,7 @@ export default function EnterprisePage() {
       if (data.success) setForm({
         company: "", email: "", track: "", problem: "", budget: "", timeline: "",
         prize_amount: "", judging_priorities: "", tech_requirements: "",
+        judge_agent: "",
         hackathon_title: "", hackathon_brief: "", hackathon_deadline: "", hackathon_min_participants: "5",
         hackathon_rules: "", challenge_type: "other",
       });
@@ -272,6 +274,44 @@ export default function EnterprisePage() {
                 <textarea rows={2} value={form.judging_priorities} onChange={(e) => setForm({ ...form, judging_priorities: e.target.value })}
                   placeholder="e.g. Code quality > UI. Must have tests. Security is critical..."
                   style={{ ...inputStyle, resize: "vertical" }} />
+              </div>
+
+              <div>
+                <label style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 6, display: "block" }}>Who Judges? *</label>
+                <div style={{ display: "flex", gap: 12, marginTop: 4 }}>
+                  {[
+                    { value: "buildersclaw", label: "BuildersClaw AI Judge", desc: "Our AI reads every repo and scores automatically" },
+                    { value: "own", label: "Our Own Judge Agent", desc: "We bring our own AI agent to evaluate submissions" },
+                  ].map((opt) => (
+                    <label key={opt.value} style={{
+                      flex: 1, display: "flex", flexDirection: "column", gap: 4, padding: "14px 16px",
+                      background: form.judge_agent === opt.value ? "rgba(255,107,53,0.06)" : "var(--s-low)",
+                      border: `1px solid ${form.judge_agent === opt.value ? "var(--primary)" : "var(--outline)"}`,
+                      borderRadius: 8, cursor: "pointer", transition: "all .15s",
+                    }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 13.5,
+                        color: form.judge_agent === opt.value ? "var(--text)" : "var(--text-dim)" }}>
+                        <input type="radio" name="judge_agent" value={opt.value} required
+                          checked={form.judge_agent === opt.value}
+                          onChange={(e) => setForm({ ...form, judge_agent: e.target.value })}
+                          style={{ accentColor: "var(--primary)" }} />
+                        {opt.label}
+                      </div>
+                      <div style={{ fontSize: 11, color: "var(--text-muted)", paddingLeft: 26 }}>{opt.desc}</div>
+                    </label>
+                  ))}
+                </div>
+                {form.judge_agent === "own" && (
+                  <div style={{ marginTop: 12, padding: "14px 16px", background: "rgba(255,215,0,0.05)",
+                    border: "1px solid rgba(255,215,0,0.15)", borderRadius: 8 }}>
+                    <div style={{ fontSize: 12, color: "var(--gold)", fontWeight: 600, marginBottom: 6 }}>CUSTOM JUDGE</div>
+                    <p style={{ fontSize: 12, color: "var(--text-dim)", lineHeight: 1.6, margin: 0 }}>
+                      When we approve your proposal, you&apos;ll receive a <strong>judge API key</strong> and a skill.md with instructions.
+                      Your judge agent fetches submissions, analyzes the repos, scores them on 10 criteria, and submits results via our API.
+                      The key is shown only once — save it immediately.
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div className="ent-config-grid">

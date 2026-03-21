@@ -1,11 +1,17 @@
+import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
-import { authenticateAdminRequest } from "@/lib/auth";
+import { authenticateAdminRequest, hashToken } from "@/lib/auth";
 import { v4 as uuid } from "uuid";
 
 function sanitize(val: unknown, max: number): string | null {
   if (typeof val !== "string") return null;
   return val.trim().slice(0, max) || null;
+}
+
+/** Generate a judge-specific API key */
+function generateJudgeKey(): string {
+  return `judge_${crypto.randomBytes(32).toString("hex")}`;
 }
 
 /**
@@ -150,6 +156,7 @@ export async function PATCH(req: NextRequest) {
 
     let hackathonId: string | null = null;
     let hackathonUrl: string | null = null;
+    let judgeKey: string | null = null;
 
     // Auto-create hackathon on approve
     if (newStatus === "approved" && proposal.hackathon_config) {
@@ -162,6 +169,32 @@ export async function PATCH(req: NextRequest) {
         const endsAt = new Date(cfg.deadline);
         if (!isNaN(endsAt.getTime()) && endsAt.getTime() > Date.now()) {
           hackathonId = uuid();
+
+          // Build judging_criteria with enterprise context
+          const isCustomJudge = proposal.judge_agent === "own";
+          
+          // Generate judge key if custom judge
+          if (isCustomJudge) {
+            judgeKey = generateJudgeKey();
+          }
+
+          const judgingCriteria = JSON.stringify({
+            _format: "hackaclaw-mvp-v1",
+            judge_type: isCustomJudge ? "custom" : "platform",
+            ...(isCustomJudge ? { judge_key_hash: hashToken(judgeKey!) } : {}),
+            enterprise_problem: proposal.problem_description,
+            enterprise_requirements: proposal.tech_requirements || null,
+            judging_priorities: proposal.judging_priorities || null,
+            criteria_text: cfg.rules || null,
+            prize_amount: proposal.prize_amount || 0,
+            company: proposal.company,
+            // Filled after judging
+            winner_agent_id: null,
+            winner_team_id: null,
+            finalized_at: null,
+            notes: null,
+          });
+
           const { error: insertErr } = await supabaseAdmin
             .from("hackathons")
             .insert({
@@ -172,22 +205,24 @@ export async function PATCH(req: NextRequest) {
               rules: cfg.rules || null,
               entry_type: "free",
               entry_fee: 0,
-              prize_pool: 0,
+              prize_pool: Number(proposal.prize_amount) || 0,
               platform_fee_pct: 0.1,
               max_participants: 500,
               team_size_min: 1,
               team_size_max: 1,
               build_time_seconds: 180,
-              challenge_type: cfg.challenge_type || "landing_page",
+              challenge_type: cfg.challenge_type || "other",
               status: "open",
               created_by: id,
               starts_at: new Date().toISOString(),
               ends_at: endsAt.toISOString(),
+              judging_criteria: judgingCriteria,
             });
 
           if (insertErr) {
             console.error("Auto hackathon creation failed:", insertErr);
             hackathonId = null;
+            judgeKey = null;
           } else {
             hackathonUrl = `/hackathons/${hackathonId}`;
           }
@@ -214,6 +249,11 @@ export async function PATCH(req: NextRequest) {
         id,
         status: hackathonId ? "hackathon_created" : newStatus,
         ...(hackathonId ? { hackathon_id: hackathonId, hackathon_url: hackathonUrl } : {}),
+        ...(judgeKey ? {
+          judge_api_key: judgeKey,
+          judge_skill_url: "https://buildersclaw.vercel.app/judge-skill.md",
+          judge_instructions: "Save this judge_api_key — it's shown only once. Your judge agent uses it to submit scores.",
+        } : {}),
       },
     });
   } catch {
