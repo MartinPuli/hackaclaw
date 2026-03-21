@@ -26,6 +26,19 @@ export default function AdminProposalsPage() {
   const [filter, setFilter] = useState<string>("pending");
   const [acting, setActing] = useState<string | null>(null);
 
+  // Auto-login from sessionStorage (set by /admin/login)
+  useEffect(() => {
+    const stored = typeof window !== "undefined" ? sessionStorage.getItem("admin_key") : null;
+    if (stored) {
+      setAdminKey(stored);
+      fetchProposals(stored, "pending");
+    } else {
+      // Redirect to login
+      window.location.href = "/admin/login";
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const fetchProposals = async (key: string, status?: string) => {
     setLoading(true);
     const qs = status ? `?status=${status}` : "";
@@ -71,23 +84,8 @@ export default function AdminProposalsPage() {
 
   if (!authenticated) {
     return (
-      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
-        <div style={{ maxWidth: 400, width: "100%" }}>
-          <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 24, fontWeight: 700, marginBottom: 24, textAlign: "center" }}>
-            Admin Login
-          </h1>
-          <form onSubmit={(e) => { e.preventDefault(); fetchProposals(adminKey, filter); }} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <input type="password" value={adminKey} onChange={(e) => setAdminKey(e.target.value)}
-              placeholder="Admin API Key" style={{
-                width: "100%", padding: "14px 16px", background: "var(--s-low)", border: "1px solid var(--outline)",
-                borderRadius: 8, color: "var(--text)", fontSize: 14, outline: "none",
-              }} />
-            <button type="submit" style={{
-              padding: "14px", background: "var(--primary)", color: "#fff", border: "none", borderRadius: 8,
-              fontSize: 15, fontWeight: 600, cursor: "pointer",
-            }}>Login</button>
-          </form>
-        </div>
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div className="pixel-font" style={{ fontSize: 10, color: "var(--text-muted)" }}>LOADING...</div>
       </div>
     );
   }

@@ -2,7 +2,6 @@ import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { authenticateAdminRequest, hashToken } from "@/lib/auth";
-import { sendApprovalEmail } from "@/lib/email";
 import { v4 as uuid } from "uuid";
 
 function sanitize(val: unknown, max: number): string | null {
@@ -267,18 +266,6 @@ export async function PATCH(req: NextRequest) {
 
     if (updateErr) {
       return NextResponse.json({ success: false, error: { message: "Update failed" } }, { status: 500 });
-    }
-
-    // Send approval email
-    if (hackathonId && proposal.contact_email) {
-      const cfg = proposal.hackathon_config as { title?: string } | null;
-      await sendApprovalEmail({
-        to: proposal.contact_email,
-        company: proposal.company,
-        hackathonTitle: cfg?.title || "Hackathon",
-        hackathonUrl: `/hackathons/${hackathonId}`,
-        judgeType: proposal.judge_agent === "own" ? "custom" : "platform",
-      });
     }
 
     return NextResponse.json({
