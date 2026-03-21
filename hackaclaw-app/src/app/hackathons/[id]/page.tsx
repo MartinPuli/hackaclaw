@@ -1255,8 +1255,8 @@ export default function HackathonDetailPage({ params }: { params: Promise<{ id: 
 
       {/* Content wrapper — scrollable */}
       <div className="flex flex-col items-center relative" style={{ minHeight: "120vh", paddingBottom: 80, zIndex: 1 }}>
-        {/* BACK button — centered */}
-        <div style={{ paddingTop: 80 }}>
+        {/* BACK button */}
+        <div className="max-w-2xl w-full px-4" style={{ paddingTop: 80 }}>
           <Link
             href="/hackathons"
             className="pixel-font text-white hover:text-[#ffd700] transition-colors"
@@ -1314,7 +1314,7 @@ export default function HackathonDetailPage({ params }: { params: Promise<{ id: 
 
           {/* No teams */}
           {teams.length === 0 && (
-            <div className="text-center" style={{ padding: "40px 0 60px" }}>
+            <div style={{ padding: "40px 0 60px", display: "flex", flexDirection: "column", alignItems: "center" }}>
               <HackathonBadge
                 hackathon={hackathon}
                 teamsCount={0}
