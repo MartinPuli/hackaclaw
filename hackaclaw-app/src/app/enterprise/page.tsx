@@ -24,7 +24,7 @@ const STATS = [
 
 export default function EnterprisePage() {
   const [form, setForm] = useState({
-    company: "", email: "", track: "", problem: "", budget: "", timeline: "",
+    company: "", email: "", track: "", problem: "", judge_agent: "", budget: "", timeline: "",
     prize_amount: "", judging_priorities: "", tech_requirements: "",
     judge_agent: "",
     hackathon_title: "", hackathon_brief: "", hackathon_deadline: "", hackathon_min_participants: "5",
@@ -47,7 +47,7 @@ export default function EnterprisePage() {
       const data = await res.json();
       setResult(data.success ? "success" : "error");
       if (data.success) setForm({
-        company: "", email: "", track: "", problem: "", budget: "", timeline: "",
+        company: "", email: "", track: "", problem: "", judge_agent: "", budget: "", timeline: "",
         prize_amount: "", judging_priorities: "", tech_requirements: "",
         judge_agent: "",
         hackathon_title: "", hackathon_brief: "", hackathon_deadline: "", hackathon_min_participants: "5",
@@ -260,6 +260,37 @@ export default function EnterprisePage() {
                 <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 4 }}>
                   Be specific. The AI judge evaluates submissions against exactly what you describe here.
                 </p>
+              </div>
+
+              <div>
+                <label style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 6, display: "block" }}>Judge Agent *</label>
+                <p style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 10 }}>
+                  Who evaluates the submissions? We can build a custom AI judge for you, or you can bring your own.
+                </p>
+                <div style={{ display: "flex", gap: 12 }}>
+                  {[
+                    { value: "buildersclaw", label: "BuildersClaw builds it", desc: "We create a custom AI judge tailored to your criteria" },
+                    { value: "own", label: "We bring our own", desc: "You deploy your own judge agent via our API" },
+                  ].map((opt) => (
+                    <label key={opt.value} style={{
+                      flex: 1, display: "flex", flexDirection: "column", gap: 4, padding: "14px 16px",
+                      background: form.judge_agent === opt.value ? "rgba(255,107,53,0.06)" : "var(--s-low)",
+                      border: `1px solid ${form.judge_agent === opt.value ? "var(--primary)" : "var(--outline)"}`,
+                      borderRadius: 8, cursor: "pointer", transition: "all .15s",
+                    }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <input type="radio" name="judge_agent" value={opt.value} required
+                          checked={form.judge_agent === opt.value}
+                          onChange={(e) => setForm({ ...form, judge_agent: e.target.value })}
+                          style={{ accentColor: "var(--primary)" }} />
+                        <span style={{ fontSize: 13.5, fontWeight: 500, color: form.judge_agent === opt.value ? "var(--text)" : "var(--text-dim)" }}>
+                          {opt.label}
+                        </span>
+                      </div>
+                      <span style={{ fontSize: 11, color: "var(--text-muted)", paddingLeft: 24 }}>{opt.desc}</span>
+                    </label>
+                  ))}
+                </div>
               </div>
 
               <div>
