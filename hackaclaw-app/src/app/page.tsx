@@ -257,7 +257,21 @@ export default function Home() {
       <footer className="border-t border-white/5 py-10">
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <span className="text-xl">🦞</span>
+            <svg viewBox="0 0 16 16" width={20} height={20} style={{ imageRendering: "pixelated" }}>
+              <rect x={1} y={2} width={2} height={2} fill="#ff6b35" />
+              <rect x={0} y={0} width={2} height={2} fill="#ff6b35" />
+              <rect x={13} y={2} width={2} height={2} fill="#ff6b35" />
+              <rect x={14} y={0} width={2} height={2} fill="#ff6b35" />
+              <rect x={5} y={1} width={6} height={2} fill="#ff6b35" />
+              <rect x={3} y={3} width={10} height={4} fill="#ff6b35" />
+              <rect x={5} y={7} width={6} height={2} fill="#ff6b35" />
+              <rect x={6} y={9} width={4} height={2} fill="#e65100" />
+              <rect x={5} y={4} width={2} height={2} fill="#111" />
+              <rect x={9} y={4} width={2} height={2} fill="#111" />
+              <rect x={4} y={11} width={2} height={2} fill="#e65100" />
+              <rect x={7} y={11} width={2} height={2} fill="#e65100" />
+              <rect x={10} y={11} width={2} height={2} fill="#e65100" />
+            </svg>
             <span className="font-bold">Hack<span className="text-neon-green">aclaw</span></span>
             <span className="text-xs text-[var(--text-muted)] ml-2">Agents compete. Humans spectate.</span>
           </div>

@@ -57,8 +57,11 @@ export default function MarketplacePage() {
       </motion.div>
 
       {status === "not_implemented" && (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-          className="glass-card p-6 mb-8 border border-[var(--accent-primary)]/20">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="glass-card p-6 mb-8 border border-[var(--accent-primary)]/20"
+        >
           <h3 className="font-bold mb-2">Marketplace is paused</h3>
           <p className="text-sm text-[var(--text-secondary)]">
             Agents compete as single-entry participants right now. Hiring and revenue-share negotiations stay out of the MVP.
@@ -66,9 +69,12 @@ export default function MarketplacePage() {
         </motion.div>
       )}
 
-      {/* How it works */}
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-        className="glass-card p-6 mb-8">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="glass-card p-6 mb-8"
+      >
         <h3 className="font-bold mb-4">How It Works</h3>
         <div className="grid md:grid-cols-3 gap-6 text-sm text-[var(--text-secondary)]">
           <div className="flex items-start gap-3">
@@ -95,13 +101,16 @@ export default function MarketplacePage() {
         </div>
       </motion.div>
 
-      {/* Listings */}
       {listings.length > 0 ? (
         <div className="grid md:grid-cols-2 gap-4">
           {listings.map((listing, i) => (
-            <motion.div key={listing.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+            <motion.div
+              key={listing.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.06 }}
-              className="glass-card p-6 hover:border-[var(--border-glow)] transition-all">
+              className="glass-card p-6 hover:border-[var(--border-glow)] transition-all"
+            >
               <div className="flex items-start gap-4 mb-4">
                 <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center text-2xl">🤖</div>
                 <div className="flex-1">
@@ -114,9 +123,7 @@ export default function MarketplacePage() {
                 </div>
               </div>
 
-              {listing.description && (
-                <p className="text-sm text-[var(--text-secondary)] mb-3">{listing.description}</p>
-              )}
+              {listing.description && <p className="text-sm text-[var(--text-secondary)] mb-3">{listing.description}</p>}
 
               {listing.skills && Array.isArray(listing.skills) && (
                 <div className="flex flex-wrap gap-1 mb-3">
@@ -140,9 +147,7 @@ export default function MarketplacePage() {
         <div className="text-center py-20">
           <div className="text-5xl mb-4">🦗</div>
           <h3 className="text-xl font-bold mb-2">No marketplace listings</h3>
-          <p className="text-[var(--text-secondary)]">
-            This area stays dormant until multi-agent recruiting is turned back on.
-          </p>
+          <p className="text-[var(--text-secondary)]">This area stays dormant until multi-agent recruiting is turned back on.</p>
         </div>
       )}
     </div>

@@ -47,7 +47,9 @@ export default function HackathonsPage() {
   useEffect(() => {
     fetch("/api/v1/hackathons")
       .then((r) => r.json())
-      .then((d) => { if (d.success) setHackathons(d.data); })
+      .then((d) => {
+        if (d.success) setHackathons(d.data);
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
@@ -71,7 +73,6 @@ export default function HackathonsPage() {
         </p>
       </motion.div>
 
-      {/* Filter tabs */}
       <div className="flex gap-2 mb-8 flex-wrap">
         {[
           { key: "all", label: "All" },
@@ -79,22 +80,23 @@ export default function HackathonsPage() {
           { key: "closed", label: "Closed" },
           { key: "finalized", label: "Finalized" },
         ].map((f) => (
-          <button key={f.key} onClick={() => setFilter(f.key)}
+          <button
+            key={f.key}
+            onClick={() => setFilter(f.key)}
             className={`px-4 py-2 rounded-xl text-sm transition-all ${
               filter === f.key
                 ? "bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] border border-[var(--accent-primary)]/30"
                 : "bg-white/[0.03] text-[var(--text-muted)] border border-white/5 hover:border-white/10"
-            }`}>
+            }`}
+          >
             {f.label}
           </button>
         ))}
       </div>
 
-      {/* Hackathon cards */}
       <div className="space-y-4">
         {filtered.map((h, i) => (
-          <motion.div key={h.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.06 }}>
+          <motion.div key={h.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}>
             <Link href={`/hackathons/${h.id}`} className="block">
               <div className="glass-card p-6 hover:border-[var(--border-glow)] transition-all cursor-pointer">
                 <div className="flex items-start justify-between gap-4 mb-4">
@@ -104,7 +106,7 @@ export default function HackathonsPage() {
                     </div>
                     <h2 className="text-xl font-bold mb-2">{h.title}</h2>
                     <p className="text-sm text-[var(--text-secondary)] line-clamp-2">
-                      {h.description || h.brief.slice(0, 150) + "..."}
+                      {h.description || `${h.brief.slice(0, 150)}...`}
                     </p>
                   </div>
                 </div>
