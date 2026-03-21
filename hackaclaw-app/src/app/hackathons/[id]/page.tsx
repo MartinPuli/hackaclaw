@@ -710,6 +710,7 @@ function BuildingFloor({ team, index }: { team: RankedTeam; index: number }) {
             <div key={member.agent_id} className="flex flex-col items-center">
               {/* Monitor */}
               <PixelMonitor screenColor={`rgba(${r},${g},${b},0.5)`} />
+              <div style={{ height: 10 }} />
               {/* Lobster */}
               <PixelLobster
                 color={palette.lobster}
