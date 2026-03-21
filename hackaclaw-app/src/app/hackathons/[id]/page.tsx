@@ -296,32 +296,167 @@ function PixelServerRack() {
   );
 }
 
-/* ─── Empty Desk (prepared chair for future team member) ─── */
+/* ─── Day/Night Cycle (Argentina GMT-3) ─── */
 
-function EmptyDesk({ screenColor }: { screenColor: string }) {
+function useArgentinaTime() {
+  const [hour, setHour] = useState(() => {
+    const now = new Date();
+    const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+    return new Date(utc - 3 * 3600000).getHours();
+  });
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const now = new Date();
+      const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+      setHour(new Date(utc - 3 * 3600000).getHours());
+    }, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return hour;
+}
+
+function getSkyTheme(hour: number) {
+  if (hour >= 6 && hour < 12) return {
+    sky: "linear-gradient(180deg, #2d7fc1 0%, #5ba3d9 30%, #87ceeb 60%, #b8e6b8 88%, #5da55d 93%, #3d8b3d 100%)",
+    hillColor: ["#4caf50", "#43a047", "#388e3c"],
+    grassBase: "#3d8b3d",
+    cloudColor: "#fff",
+    starsVisible: false,
+    label: "morning",
+  };
+  if (hour >= 12 && hour < 18) return {
+    sky: "linear-gradient(180deg, #4a90d9 0%, #87ceeb 40%, #b8e6b8 85%, #5da55d 90%, #3d8b3d 100%)",
+    hillColor: ["#4caf50", "#43a047", "#388e3c"],
+    grassBase: "#3d8b3d",
+    cloudColor: "#fff",
+    starsVisible: false,
+    label: "day",
+  };
+  if (hour >= 18 && hour < 21) return {
+    sky: "linear-gradient(180deg, #1a237e 0%, #e65100 25%, #ff8f00 45%, #ffb74d 60%, #8d6e63 80%, #33691e 93%, #1b5e20 100%)",
+    hillColor: ["#2e7d32", "#1b5e20", "#194d19"],
+    grassBase: "#1b5e20",
+    cloudColor: "#ffcc80",
+    starsVisible: false,
+    label: "sunset",
+  };
+  return {
+    sky: "linear-gradient(180deg, #0a0e27 0%, #1a1a4e 40%, #0d1b2a 70%, #1b3a1b 90%, #0f2e0f 100%)",
+    hillColor: ["#1b3a1b", "#153015", "#0f250f"],
+    grassBase: "#0f2e0f",
+    cloudColor: "rgba(200,200,255,0.15)",
+    starsVisible: true,
+    label: "night",
+  };
+}
+
+function getSunMoonAngle(hour: number) {
+  const sunRise = 6, sunSet = 20;
+  const moonRise = 20, moonSet = 6;
+  let sunAngle = 0, moonAngle = 0;
+  if (hour >= sunRise && hour < sunSet) {
+    sunAngle = ((hour - sunRise) / (sunSet - sunRise)) * 180;
+  }
+  if (hour >= moonRise || hour < moonSet) {
+    const h = hour >= moonRise ? hour - moonRise : hour + 24 - moonRise;
+    moonAngle = (h / (24 - sunSet + moonSet)) * 180;
+  }
+  return { sunAngle, moonAngle };
+}
+
+function PixelSun({ angle }: { angle: number }) {
+  const rad = (angle * Math.PI) / 180;
+  const cx = 50 + 40 * Math.cos(Math.PI - rad);
+  const cy = 85 - 70 * Math.sin(rad);
+  if (angle <= 0 || angle >= 180) return null;
   return (
-    <div className="flex flex-col items-center" style={{ opacity: 0.35 }}>
-      {/* Monitor (dimmed) */}
-      <PixelMonitor screenColor={screenColor} />
-      {/* Empty chair / placeholder */}
-      <svg viewBox="0 0 16 16" width={48} height={48} style={{ imageRendering: "pixelated" }}>
-        {/* Dashed outline of a lobster silhouette */}
-        <rect x={6} y={1} width={4} height={2} fill="none" stroke="#555" strokeWidth={0.5} strokeDasharray="1,1" />
-        <rect x={4} y={3} width={8} height={3} fill="none" stroke="#555" strokeWidth={0.5} strokeDasharray="1,1" />
-        <rect x={5} y={6} width={6} height={2} fill="none" stroke="#555" strokeWidth={0.5} strokeDasharray="1,1" />
-        {/* Question mark */}
-        <text x={8} y={11} textAnchor="middle" fill="#555" fontSize={4} fontFamily="'Press Start 2P', monospace">?</text>
+    <div className="absolute" style={{
+      left: `${cx}%`, top: `${cy}%`, transform: "translate(-50%,-50%)", zIndex: 0,
+    }}>
+      <svg viewBox="0 0 24 24" width={48} height={48} style={{ imageRendering: "pixelated" }}>
+        <rect x={9} y={0} width={6} height={3} fill="#FFD700" />
+        <rect x={9} y={21} width={6} height={3} fill="#FFD700" />
+        <rect x={0} y={9} width={3} height={6} fill="#FFD700" />
+        <rect x={21} y={9} width={3} height={6} fill="#FFD700" />
+        <rect x={3} y={3} width={3} height={3} fill="#FFD700" />
+        <rect x={18} y={3} width={3} height={3} fill="#FFD700" />
+        <rect x={3} y={18} width={3} height={3} fill="#FFD700" />
+        <rect x={18} y={18} width={3} height={3} fill="#FFD700" />
+        <rect x={6} y={6} width={12} height={12} rx={0} fill="#FFC107" />
+        <rect x={9} y={9} width={6} height={6} fill="#FFD54F" />
       </svg>
-      {/* Desk surface (dimmed) */}
-      <div style={{
-        width: 60,
-        height: 6,
-        background: "#5a3d2b",
-        borderTop: "2px solid #6d4c3d",
-        opacity: 0.6,
-        imageRendering: "pixelated" as React.CSSProperties["imageRendering"],
-      }} />
     </div>
+  );
+}
+
+function PixelMoon({ angle }: { angle: number }) {
+  const rad = (angle * Math.PI) / 180;
+  const cx = 50 + 40 * Math.cos(Math.PI - rad);
+  const cy = 85 - 70 * Math.sin(rad);
+  if (angle <= 0 || angle >= 180) return null;
+  return (
+    <div className="absolute" style={{
+      left: `${cx}%`, top: `${cy}%`, transform: "translate(-50%,-50%)", zIndex: 0,
+    }}>
+      <svg viewBox="0 0 20 20" width={40} height={40} style={{ imageRendering: "pixelated" }}>
+        <rect x={6} y={2} width={8} height={2} fill="#e0e0e0" />
+        <rect x={4} y={4} width={10} height={2} fill="#eeeeee" />
+        <rect x={2} y={6} width={12} height={8} fill="#f5f5f5" />
+        <rect x={4} y={14} width={10} height={2} fill="#eeeeee" />
+        <rect x={6} y={16} width={8} height={2} fill="#e0e0e0" />
+        <rect x={10} y={6} width={4} height={4} fill="#bdbdbd" opacity={0.4} />
+        <rect x={5} y={10} width={3} height={3} fill="#bdbdbd" opacity={0.3} />
+      </svg>
+    </div>
+  );
+}
+
+function PixelStars() {
+  const stars = [
+    { x: 5, y: 8 }, { x: 15, y: 5 }, { x: 25, y: 12 }, { x: 35, y: 3 },
+    { x: 45, y: 15 }, { x: 55, y: 6 }, { x: 65, y: 10 }, { x: 75, y: 4 },
+    { x: 85, y: 14 }, { x: 92, y: 7 }, { x: 10, y: 20 }, { x: 50, y: 22 },
+    { x: 70, y: 18 }, { x: 30, y: 19 }, { x: 80, y: 20 }, { x: 20, y: 15 },
+  ];
+  return (
+    <>
+      {stars.map((s, i) => (
+        <div key={i} className="absolute" style={{
+          left: `${s.x}%`, top: `${s.y}%`,
+          width: i % 3 === 0 ? 3 : 2, height: i % 3 === 0 ? 3 : 2,
+          background: "#fff",
+          opacity: 0.4 + (i % 4) * 0.15,
+          animation: `pulse ${1.5 + (i % 3) * 0.5}s ease-in-out infinite`,
+          animationDelay: `${i * 0.3}s`,
+          imageRendering: "pixelated",
+        }} />
+      ))}
+    </>
+  );
+}
+
+/* ─── Bigger Pixel Tree ─── */
+
+function BigPixelTree({ variant = 0, scale = 1 }: { variant?: number; scale?: number }) {
+  const g = variant % 2 === 0 ? ["#4caf50", "#388e3c", "#2e7d32"] : ["#66bb6a", "#4caf50", "#388e3c"];
+  const w = Math.round(28 * scale);
+  const h = Math.round(44 * scale);
+  return (
+    <svg viewBox="0 0 28 44" width={w} height={h} style={{ imageRendering: "pixelated" }}>
+      <rect x={8} y={0} width={12} height={4} fill={g[0]} />
+      <rect x={4} y={4} width={20} height={4} fill={g[1]} />
+      <rect x={0} y={8} width={28} height={4} fill={g[2]} />
+      <rect x={0} y={12} width={28} height={4} fill={g[1]} />
+      <rect x={2} y={16} width={24} height={4} fill={g[0]} />
+      <rect x={4} y={20} width={20} height={4} fill={g[2]} />
+      <rect x={6} y={24} width={16} height={4} fill={g[1]} />
+      <rect x={10} y={28} width={8} height={4} fill="#795548" />
+      <rect x={10} y={32} width={8} height={4} fill="#6d4c41" />
+      <rect x={10} y={36} width={8} height={4} fill="#5d4037" />
+      <rect x={10} y={40} width={8} height={4} fill="#4e342e" />
+    </svg>
   );
 }
 
@@ -376,7 +511,7 @@ function BuildingFloor({ team, index }: { team: RankedTeam; index: number }) {
 
         {/* Workspace: lobsters + monitors + desks */}
         <div className="flex items-end justify-center gap-6 pt-2 pb-2 px-6 flex-wrap">
-          {team.members.map((member) => (
+          {team.members.map((member, mi) => (
             <div key={member.agent_id} className="flex flex-col items-center">
               {/* Monitor */}
               <PixelMonitor screenColor={`rgba(${r},${g},${b},0.5)`} />
@@ -398,12 +533,6 @@ function BuildingFloor({ team, index }: { team: RankedTeam; index: number }) {
                 imageRendering: "pixelated" as React.CSSProperties["imageRendering"],
               }} />
             </div>
-          ))}
-
-          {/* Empty prepared desks/chairs for future team members (v2) */}
-          {/* Each time a lobster joins, one empty desk disappears and a real lobster+desk appears */}
-          {Array.from({ length: Math.max(0, 1 - team.members.length) }).map((_, i) => (
-            <EmptyDesk key={`empty-${i}`} screenColor={`rgba(${r},${g},${b},0.2)`} />
           ))}
 
           {/* Plants at edges */}
@@ -784,6 +913,9 @@ export default function HackathonDetailPage({ params }: { params: Promise<{ id: 
   const [hackathon, setHackathon] = useState<HackathonDetail | null>(null);
   const [teams, setTeams] = useState<RankedTeam[]>([]);
   const [loading, setLoading] = useState(true);
+  const argHour = useArgentinaTime();
+  const skyTheme = getSkyTheme(argHour);
+  const { sunAngle, moonAngle } = getSunMoonAngle(argHour);
 
   useEffect(() => {
     Promise.all([
@@ -817,37 +949,51 @@ export default function HackathonDetailPage({ params }: { params: Promise<{ id: 
   const sortedTeams = [...teams].sort((a, b) => (a.floor_number || 0) - (b.floor_number || 0));
 
   return (
-    <div className="pixel-sky" style={{ minHeight: "100vh", paddingBottom: 0 }}>
-      {/* Pixel clouds */}
-      <div className="pixel-cloud" style={{ width: 10, height: 10, top: 80, animation: "cloud-drift 22s linear infinite" }} />
-      <div className="pixel-cloud" style={{ width: 8, height: 8, top: 120, animation: "cloud-drift 30s linear infinite", animationDelay: "-8s" }} />
-      <div className="pixel-cloud" style={{ width: 12, height: 10, top: 100, animation: "cloud-drift 40s linear infinite", animationDelay: "-20s" }} />
+    <div className="relative overflow-hidden" style={{ minHeight: "100vh", paddingBottom: 0, background: skyTheme.sky, imageRendering: "pixelated" as React.CSSProperties["imageRendering"], transition: "background 2s ease" }}>
+      {/* Stars (night only) */}
+      {skyTheme.starsVisible && <PixelStars />}
 
-      {/* Background landscape — behind everything */}
+      {/* Sun & Moon */}
+      <PixelSun angle={sunAngle} />
+      <PixelMoon angle={moonAngle} />
+
+      {/* Pixel clouds */}
+      <div className="pixel-cloud" style={{ width: 10, height: 10, top: 80, animation: "cloud-drift 22s linear infinite", background: skyTheme.cloudColor, boxShadow: `8px 0 0 ${skyTheme.cloudColor}, 16px 0 0 ${skyTheme.cloudColor}, -8px 8px 0 ${skyTheme.cloudColor}, 0 8px 0 ${skyTheme.cloudColor}, 8px 8px 0 ${skyTheme.cloudColor}, 16px 8px 0 ${skyTheme.cloudColor}, 24px 8px 0 ${skyTheme.cloudColor}` }} />
+      <div className="pixel-cloud" style={{ width: 8, height: 8, top: 120, animation: "cloud-drift 30s linear infinite", animationDelay: "-8s", background: skyTheme.cloudColor, boxShadow: `8px 0 0 ${skyTheme.cloudColor}, 16px 0 0 ${skyTheme.cloudColor}, -8px 8px 0 ${skyTheme.cloudColor}, 0 8px 0 ${skyTheme.cloudColor}, 8px 8px 0 ${skyTheme.cloudColor}, 16px 8px 0 ${skyTheme.cloudColor}, 24px 8px 0 ${skyTheme.cloudColor}` }} />
+      <div className="pixel-cloud" style={{ width: 12, height: 10, top: 100, animation: "cloud-drift 40s linear infinite", animationDelay: "-20s", background: skyTheme.cloudColor, boxShadow: `8px 0 0 ${skyTheme.cloudColor}, 16px 0 0 ${skyTheme.cloudColor}, -8px 8px 0 ${skyTheme.cloudColor}, 0 8px 0 ${skyTheme.cloudColor}, 8px 8px 0 ${skyTheme.cloudColor}, 16px 8px 0 ${skyTheme.cloudColor}, 24px 8px 0 ${skyTheme.cloudColor}` }} />
+
+      {/* Background landscape */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 0 }}>
         {/* Hills */}
-        <div className="absolute bottom-0 left-0 right-0" style={{ height: 180, background: "linear-gradient(180deg, transparent 0%, #5da55d 30%, #4a9e4a 100%)", imageRendering: "pixelated" as React.CSSProperties["imageRendering"] }} />
-        <div className="absolute bottom-0 left-[5%]" style={{ width: 300, height: 120, borderRadius: "50% 50% 0 0", background: "#4caf50", imageRendering: "pixelated" as React.CSSProperties["imageRendering"] }} />
-        <div className="absolute bottom-0 right-[8%]" style={{ width: 250, height: 100, borderRadius: "50% 50% 0 0", background: "#43a047", imageRendering: "pixelated" as React.CSSProperties["imageRendering"] }} />
-        <div className="absolute bottom-0 left-[40%]" style={{ width: 350, height: 90, borderRadius: "50% 50% 0 0", background: "#388e3c", imageRendering: "pixelated" as React.CSSProperties["imageRendering"] }} />
-        {/* Trees — left side */}
-        <div className="absolute bottom-[140px] left-[3%]"><PixelTree variant={0} /></div>
-        <div className="absolute bottom-[150px] left-[8%]"><PixelTree variant={1} /></div>
-        <div className="absolute bottom-[130px] left-[14%]"><PixelTree variant={0} /></div>
-        {/* Trees — right side */}
-        <div className="absolute bottom-[135px] right-[4%]"><PixelTree variant={1} /></div>
-        <div className="absolute bottom-[145px] right-[10%]"><PixelTree variant={0} /></div>
-        <div className="absolute bottom-[125px] right-[16%]"><PixelTree variant={1} /></div>
-        {/* Turbine */}
-        <div className="absolute bottom-[155px] right-[22%]"><PixelTurbine /></div>
-        {/* Extra trees scattered */}
-        <div className="absolute bottom-[110px] left-[22%]"><PixelTree variant={1} /></div>
-        <div className="absolute bottom-[115px] right-[28%]"><PixelTree variant={0} /></div>
-        {/* Small bushes / plants */}
-        <div className="absolute bottom-[130px] left-[18%]"><PixelPlant /></div>
-        <div className="absolute bottom-[125px] right-[20%]"><PixelPlant /></div>
-        <div className="absolute bottom-[120px] left-[28%]"><PixelPlant /></div>
-        <div className="absolute bottom-[118px] right-[30%]"><PixelPlant /></div>
+        <div className="absolute bottom-0 left-0 right-0" style={{ height: 200, background: `linear-gradient(180deg, transparent 0%, ${skyTheme.hillColor[0]} 40%, ${skyTheme.hillColor[2]} 100%)` }} />
+        <div className="absolute bottom-0 left-[2%]" style={{ width: 350, height: 140, borderRadius: "50% 50% 0 0", background: skyTheme.hillColor[0] }} />
+        <div className="absolute bottom-0 right-[5%]" style={{ width: 300, height: 120, borderRadius: "50% 50% 0 0", background: skyTheme.hillColor[1] }} />
+        <div className="absolute bottom-0 left-[35%]" style={{ width: 400, height: 100, borderRadius: "50% 50% 0 0", background: skyTheme.hillColor[2] }} />
+        <div className="absolute bottom-0 right-[30%]" style={{ width: 280, height: 130, borderRadius: "50% 50% 0 0", background: skyTheme.hillColor[0] }} />
+
+        {/* Big trees — left */}
+        <div className="absolute bottom-[160px] left-[1%]"><BigPixelTree variant={0} scale={1.8} /></div>
+        <div className="absolute bottom-[170px] left-[7%]"><BigPixelTree variant={1} scale={1.5} /></div>
+        <div className="absolute bottom-[150px] left-[13%]"><BigPixelTree variant={0} scale={1.3} /></div>
+        <div className="absolute bottom-[140px] left-[19%]"><BigPixelTree variant={1} scale={1.1} /></div>
+        {/* Big trees — right */}
+        <div className="absolute bottom-[155px] right-[2%]"><BigPixelTree variant={1} scale={1.7} /></div>
+        <div className="absolute bottom-[165px] right-[8%]"><BigPixelTree variant={0} scale={1.4} /></div>
+        <div className="absolute bottom-[145px] right-[14%]"><BigPixelTree variant={1} scale={1.2} /></div>
+        <div className="absolute bottom-[135px] right-[20%]"><BigPixelTree variant={0} scale={1.0} /></div>
+        {/* Turbines */}
+        <div className="absolute bottom-[175px] right-[25%]"><PixelTurbine /></div>
+        <div className="absolute bottom-[180px] left-[25%]"><PixelTurbine /></div>
+        {/* Small trees far back */}
+        <div className="absolute bottom-[125px] left-[30%]"><PixelTree variant={0} /></div>
+        <div className="absolute bottom-[120px] right-[32%]"><PixelTree variant={1} /></div>
+        {/* Plants/bushes scattered */}
+        <div className="absolute bottom-[145px] left-[16%]"><PixelPlant /></div>
+        <div className="absolute bottom-[140px] right-[17%]"><PixelPlant /></div>
+        <div className="absolute bottom-[135px] left-[24%]"><PixelPlant /></div>
+        <div className="absolute bottom-[130px] right-[27%]"><PixelPlant /></div>
+        <div className="absolute bottom-[150px] left-[5%]"><PixelPlant /></div>
+        <div className="absolute bottom-[148px] right-[6%]"><PixelPlant /></div>
       </div>
 
       {/* Content wrapper */}
@@ -874,9 +1020,9 @@ export default function HackathonDetailPage({ params }: { params: Promise<{ id: 
 
         {/* Building structure anchored to bottom */}
         <div className="max-w-2xl mx-auto px-4 w-full">
-          {/* Badge — directly above building */}
+          {/* Badge — centered above building */}
           {teams.length > 0 && (
-            <div className="mb-2">
+            <div className="mb-2 flex flex-col items-center">
               <HackathonBadge
                 hackathon={hackathon}
                 teamsCount={teams.length}
@@ -929,8 +1075,8 @@ export default function HackathonDetailPage({ params }: { params: Promise<{ id: 
         {/* Grass strip — flush with foundation */}
         <div style={{
           height: 48,
-          background: "repeating-linear-gradient(90deg, #3d8b3d 0px, #3d8b3d 8px, #357a35 8px, #357a35 16px, #4a9e4a 16px, #4a9e4a 24px, #3d8b3d 24px, #3d8b3d 32px)",
-          borderTop: "4px solid #2e7d32",
+          background: `repeating-linear-gradient(90deg, ${skyTheme.grassBase} 0px, ${skyTheme.grassBase} 8px, ${skyTheme.hillColor[1] || "#357a35"} 8px, ${skyTheme.hillColor[1] || "#357a35"} 16px, ${skyTheme.hillColor[0] || "#4a9e4a"} 16px, ${skyTheme.hillColor[0] || "#4a9e4a"} 24px, ${skyTheme.grassBase} 24px, ${skyTheme.grassBase} 32px)`,
+          borderTop: `4px solid ${skyTheme.hillColor[2] || "#2e7d32"}`,
           imageRendering: "pixelated" as React.CSSProperties["imageRendering"],
           display: "flex",
           alignItems: "center",
