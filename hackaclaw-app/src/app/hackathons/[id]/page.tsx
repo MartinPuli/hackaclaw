@@ -460,6 +460,132 @@ function BigPixelTree({ variant = 0, scale = 1 }: { variant?: number; scale?: nu
   );
 }
 
+/* ─── Pixel Flowers ─── */
+
+function PixelFlower({ color = "#ff69b4", size = 12 }: { color?: string; size?: number }) {
+  return (
+    <svg viewBox="0 0 8 12" width={size} height={size * 1.5} style={{ imageRendering: "pixelated" }}>
+      <rect x={2} y={0} width={4} height={2} fill={color} />
+      <rect x={0} y={2} width={2} height={2} fill={color} />
+      <rect x={6} y={2} width={2} height={2} fill={color} />
+      <rect x={2} y={2} width={4} height={2} fill="#ffeb3b" />
+      <rect x={2} y={4} width={4} height={2} fill={color} />
+      <rect x={3} y={6} width={2} height={2} fill="#4caf50" />
+      <rect x={3} y={8} width={2} height={4} fill="#388e3c" />
+    </svg>
+  );
+}
+
+/* ─── Pixel Rock ─── */
+
+function PixelRock({ scale = 1 }: { scale?: number }) {
+  return (
+    <svg viewBox="0 0 12 8" width={Math.round(12 * scale)} height={Math.round(8 * scale)} style={{ imageRendering: "pixelated" }}>
+      <rect x={2} y={0} width={8} height={2} fill="#9e9e9e" />
+      <rect x={0} y={2} width={12} height={4} fill="#757575" />
+      <rect x={1} y={6} width={10} height={2} fill="#616161" />
+      <rect x={3} y={2} width={3} height={2} fill="#bdbdbd" />
+    </svg>
+  );
+}
+
+/* ─── Pixel Pond ─── */
+
+function PixelPond() {
+  return (
+    <svg viewBox="0 0 40 16" width={80} height={32} style={{ imageRendering: "pixelated" }}>
+      <rect x={8} y={0} width={24} height={2} fill="#29b6f6" />
+      <rect x={4} y={2} width={32} height={2} fill="#039be5" />
+      <rect x={2} y={4} width={36} height={4} fill="#0288d1" />
+      <rect x={2} y={8} width={36} height={4} fill="#0277bd" />
+      <rect x={4} y={12} width={32} height={2} fill="#01579b" />
+      <rect x={8} y={14} width={24} height={2} fill="#29b6f6" opacity={0.5} />
+      <rect x={10} y={4} width={6} height={2} fill="#4fc3f7" opacity={0.6} />
+      <rect x={22} y={6} width={8} height={2} fill="#4fc3f7" opacity={0.4} />
+    </svg>
+  );
+}
+
+/* ─── Pixel Mushroom ─── */
+
+function PixelMushroom({ color = "#f44336" }: { color?: string }) {
+  return (
+    <svg viewBox="0 0 8 10" width={10} height={13} style={{ imageRendering: "pixelated" }}>
+      <rect x={2} y={0} width={4} height={2} fill={color} />
+      <rect x={0} y={2} width={8} height={3} fill={color} />
+      <rect x={1} y={2} width={2} height={1} fill="#fff" />
+      <rect x={5} y={3} width={2} height={1} fill="#fff" />
+      <rect x={2} y={5} width={4} height={2} fill="#ffe0b2" />
+      <rect x={3} y={7} width={2} height={3} fill="#bcaaa4" />
+    </svg>
+  );
+}
+
+/* ─── Animated Pixel Bird ─── */
+
+function PixelBird({ delay = 0, top = 60, speed = 18 }: { delay?: number; top?: number; speed?: number }) {
+  return (
+    <div className="absolute" style={{
+      top, left: -30,
+      animation: `cloud-drift ${speed}s linear infinite`,
+      animationDelay: `${delay}s`,
+    }}>
+      <svg viewBox="0 0 12 8" width={16} height={11} style={{ imageRendering: "pixelated" }}>
+        <rect x={4} y={2} width={4} height={4} fill="#37474f" />
+        <rect x={8} y={3} width={2} height={2} fill="#37474f" />
+        <rect x={10} y={3} width={2} height={1} fill="#ff9800" />
+        <rect x={1} y={0} width={3} height={2} fill="#546e7a" />
+        <rect x={5} y={0} width={3} height={2} fill="#546e7a" />
+        <rect x={5} y={4} width={1} height={1} fill="#111" />
+      </svg>
+    </div>
+  );
+}
+
+/* ─── Fireflies (night) ─── */
+
+function PixelFireflies() {
+  const flies = [
+    { x: 8, y: 55 }, { x: 18, y: 62 }, { x: 82, y: 58 }, { x: 91, y: 65 },
+    { x: 12, y: 70 }, { x: 88, y: 72 }, { x: 5, y: 60 }, { x: 95, y: 68 },
+    { x: 15, y: 68 }, { x: 85, y: 55 }, { x: 22, y: 75 }, { x: 78, y: 75 },
+  ];
+  return (
+    <>
+      {flies.map((f, i) => (
+        <div key={i} className="absolute" style={{
+          left: `${f.x}%`, top: `${f.y}%`,
+          width: 4, height: 4, borderRadius: "50%",
+          background: "#ffeb3b",
+          boxShadow: "0 0 6px 2px rgba(255,235,59,0.6)",
+          animation: `pulse ${1.2 + (i % 4) * 0.4}s ease-in-out infinite`,
+          animationDelay: `${i * 0.25}s`,
+          opacity: 0.8,
+        }} />
+      ))}
+    </>
+  );
+}
+
+/* ─── Pixel Fence ─── */
+
+function PixelFence() {
+  return (
+    <svg viewBox="0 0 32 12" width={48} height={18} style={{ imageRendering: "pixelated" }}>
+      <rect x={2} y={2} width={2} height={10} fill="#8d6e63" />
+      <rect x={10} y={2} width={2} height={10} fill="#8d6e63" />
+      <rect x={18} y={2} width={2} height={10} fill="#8d6e63" />
+      <rect x={26} y={2} width={2} height={10} fill="#8d6e63" />
+      <rect x={0} y={4} width={32} height={2} fill="#a1887f" />
+      <rect x={0} y={8} width={32} height={2} fill="#a1887f" />
+      <rect x={2} y={0} width={2} height={3} fill="#795548" />
+      <rect x={10} y={0} width={2} height={3} fill="#795548" />
+      <rect x={18} y={0} width={2} height={3} fill="#795548" />
+      <rect x={26} y={0} width={2} height={3} fill="#795548" />
+    </svg>
+  );
+}
+
 /* ─── Building Floor ─── */
 
 function BuildingFloor({ team, index }: { team: RankedTeam; index: number }) {
@@ -962,38 +1088,89 @@ export default function HackathonDetailPage({ params }: { params: Promise<{ id: 
       <div className="pixel-cloud" style={{ width: 8, height: 8, top: 120, animation: "cloud-drift 30s linear infinite", animationDelay: "-8s", background: skyTheme.cloudColor, boxShadow: `8px 0 0 ${skyTheme.cloudColor}, 16px 0 0 ${skyTheme.cloudColor}, -8px 8px 0 ${skyTheme.cloudColor}, 0 8px 0 ${skyTheme.cloudColor}, 8px 8px 0 ${skyTheme.cloudColor}, 16px 8px 0 ${skyTheme.cloudColor}, 24px 8px 0 ${skyTheme.cloudColor}` }} />
       <div className="pixel-cloud" style={{ width: 12, height: 10, top: 100, animation: "cloud-drift 40s linear infinite", animationDelay: "-20s", background: skyTheme.cloudColor, boxShadow: `8px 0 0 ${skyTheme.cloudColor}, 16px 0 0 ${skyTheme.cloudColor}, -8px 8px 0 ${skyTheme.cloudColor}, 0 8px 0 ${skyTheme.cloudColor}, 8px 8px 0 ${skyTheme.cloudColor}, 16px 8px 0 ${skyTheme.cloudColor}, 24px 8px 0 ${skyTheme.cloudColor}` }} />
 
+      {/* Birds */}
+      <PixelBird delay={0} top={70} speed={20} />
+      <PixelBird delay={-7} top={90} speed={25} />
+      <PixelBird delay={-14} top={55} speed={18} />
+
+      {/* Fireflies at night */}
+      {skyTheme.starsVisible && <PixelFireflies />}
+
       {/* Background landscape */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 0 }}>
-        {/* Hills */}
-        <div className="absolute bottom-0 left-0 right-0" style={{ height: 200, background: `linear-gradient(180deg, transparent 0%, ${skyTheme.hillColor[0]} 40%, ${skyTheme.hillColor[2]} 100%)` }} />
-        <div className="absolute bottom-0 left-[2%]" style={{ width: 350, height: 140, borderRadius: "50% 50% 0 0", background: skyTheme.hillColor[0] }} />
-        <div className="absolute bottom-0 right-[5%]" style={{ width: 300, height: 120, borderRadius: "50% 50% 0 0", background: skyTheme.hillColor[1] }} />
-        <div className="absolute bottom-0 left-[35%]" style={{ width: 400, height: 100, borderRadius: "50% 50% 0 0", background: skyTheme.hillColor[2] }} />
-        <div className="absolute bottom-0 right-[30%]" style={{ width: 280, height: 130, borderRadius: "50% 50% 0 0", background: skyTheme.hillColor[0] }} />
+        {/* Far hills (back layer) */}
+        <div className="absolute bottom-0 left-0 right-0" style={{ height: 240, background: `linear-gradient(180deg, transparent 0%, ${skyTheme.hillColor[0]}88 30%, ${skyTheme.hillColor[2]} 100%)` }} />
+        <div className="absolute bottom-[40px] left-[-5%]" style={{ width: "45%", height: 160, borderRadius: "50% 60% 0 0", background: skyTheme.hillColor[1], opacity: 0.6 }} />
+        <div className="absolute bottom-[40px] right-[-5%]" style={{ width: "40%", height: 140, borderRadius: "60% 50% 0 0", background: skyTheme.hillColor[2], opacity: 0.6 }} />
+        <div className="absolute bottom-[30px] left-[20%]" style={{ width: "60%", height: 110, borderRadius: "50% 50% 0 0", background: skyTheme.hillColor[0], opacity: 0.5 }} />
 
-        {/* Big trees — left */}
-        <div className="absolute bottom-[160px] left-[1%]"><BigPixelTree variant={0} scale={1.8} /></div>
-        <div className="absolute bottom-[170px] left-[7%]"><BigPixelTree variant={1} scale={1.5} /></div>
-        <div className="absolute bottom-[150px] left-[13%]"><BigPixelTree variant={0} scale={1.3} /></div>
-        <div className="absolute bottom-[140px] left-[19%]"><BigPixelTree variant={1} scale={1.1} /></div>
-        {/* Big trees — right */}
-        <div className="absolute bottom-[155px] right-[2%]"><BigPixelTree variant={1} scale={1.7} /></div>
-        <div className="absolute bottom-[165px] right-[8%]"><BigPixelTree variant={0} scale={1.4} /></div>
-        <div className="absolute bottom-[145px] right-[14%]"><BigPixelTree variant={1} scale={1.2} /></div>
-        <div className="absolute bottom-[135px] right-[20%]"><BigPixelTree variant={0} scale={1.0} /></div>
+        {/* Near hills (front layer) */}
+        <div className="absolute bottom-0 left-[-3%]" style={{ width: 380, height: 150, borderRadius: "50% 50% 0 0", background: skyTheme.hillColor[0] }} />
+        <div className="absolute bottom-0 right-[-2%]" style={{ width: 340, height: 130, borderRadius: "50% 50% 0 0", background: skyTheme.hillColor[1] }} />
+        <div className="absolute bottom-0 left-[30%]" style={{ width: 420, height: 110, borderRadius: "50% 50% 0 0", background: skyTheme.hillColor[2] }} />
+        <div className="absolute bottom-0 right-[25%]" style={{ width: 300, height: 140, borderRadius: "50% 50% 0 0", background: skyTheme.hillColor[0] }} />
+
+        {/* Pond — right side */}
+        <div className="absolute bottom-[60px] right-[6%]"><PixelPond /></div>
+
+        {/* Big trees — left forest */}
+        <div className="absolute bottom-[110px] left-[0%]"><BigPixelTree variant={0} scale={2.2} /></div>
+        <div className="absolute bottom-[120px] left-[4%]"><BigPixelTree variant={1} scale={1.8} /></div>
+        <div className="absolute bottom-[105px] left-[9%]"><BigPixelTree variant={0} scale={1.5} /></div>
+        <div className="absolute bottom-[115px] left-[14%]"><BigPixelTree variant={1} scale={1.3} /></div>
+        <div className="absolute bottom-[100px] left-[19%]"><BigPixelTree variant={0} scale={1.1} /></div>
+
+        {/* Big trees — right forest */}
+        <div className="absolute bottom-[108px] right-[0%]"><BigPixelTree variant={1} scale={2.0} /></div>
+        <div className="absolute bottom-[118px] right-[5%]"><BigPixelTree variant={0} scale={1.7} /></div>
+        <div className="absolute bottom-[100px] right-[10%]"><BigPixelTree variant={1} scale={1.4} /></div>
+        <div className="absolute bottom-[112px] right-[15%]"><BigPixelTree variant={0} scale={1.2} /></div>
+        <div className="absolute bottom-[95px] right-[20%]"><BigPixelTree variant={1} scale={1.0} /></div>
+
+        {/* Small trees in background */}
+        <div className="absolute bottom-[130px] left-[23%]"><PixelTree variant={1} /></div>
+        <div className="absolute bottom-[125px] right-[24%]"><PixelTree variant={0} /></div>
+        <div className="absolute bottom-[135px] left-[27%]"><PixelTree variant={0} /></div>
+        <div className="absolute bottom-[128px] right-[28%]"><PixelTree variant={1} /></div>
+
         {/* Turbines */}
-        <div className="absolute bottom-[175px] right-[25%]"><PixelTurbine /></div>
-        <div className="absolute bottom-[180px] left-[25%]"><PixelTurbine /></div>
-        {/* Small trees far back */}
-        <div className="absolute bottom-[125px] left-[30%]"><PixelTree variant={0} /></div>
-        <div className="absolute bottom-[120px] right-[32%]"><PixelTree variant={1} /></div>
-        {/* Plants/bushes scattered */}
-        <div className="absolute bottom-[145px] left-[16%]"><PixelPlant /></div>
-        <div className="absolute bottom-[140px] right-[17%]"><PixelPlant /></div>
-        <div className="absolute bottom-[135px] left-[24%]"><PixelPlant /></div>
-        <div className="absolute bottom-[130px] right-[27%]"><PixelPlant /></div>
-        <div className="absolute bottom-[150px] left-[5%]"><PixelPlant /></div>
-        <div className="absolute bottom-[148px] right-[6%]"><PixelPlant /></div>
+        <div className="absolute bottom-[140px] right-[26%]"><PixelTurbine /></div>
+        <div className="absolute bottom-[145px] left-[25%]"><PixelTurbine /></div>
+
+        {/* Flowers scattered */}
+        <div className="absolute bottom-[75px] left-[3%]"><PixelFlower color="#ff69b4" size={10} /></div>
+        <div className="absolute bottom-[70px] left-[8%]"><PixelFlower color="#ff4081" size={8} /></div>
+        <div className="absolute bottom-[80px] left-[15%]"><PixelFlower color="#e040fb" size={10} /></div>
+        <div className="absolute bottom-[72px] right-[3%]"><PixelFlower color="#ff69b4" size={9} /></div>
+        <div className="absolute bottom-[78px] right-[12%]"><PixelFlower color="#ffeb3b" size={10} /></div>
+        <div className="absolute bottom-[68px] right-[18%]"><PixelFlower color="#ff4081" size={8} /></div>
+        <div className="absolute bottom-[82px] left-[22%]"><PixelFlower color="#ffeb3b" size={9} /></div>
+        <div className="absolute bottom-[76px] right-[23%]"><PixelFlower color="#e040fb" size={10} /></div>
+
+        {/* Mushrooms */}
+        <div className="absolute bottom-[68px] left-[6%]"><PixelMushroom color="#f44336" /></div>
+        <div className="absolute bottom-[65px] right-[8%]"><PixelMushroom color="#ff9800" /></div>
+        <div className="absolute bottom-[70px] left-[20%]"><PixelMushroom color="#f44336" /></div>
+
+        {/* Rocks */}
+        <div className="absolute bottom-[62px] left-[11%]"><PixelRock scale={1.5} /></div>
+        <div className="absolute bottom-[58px] right-[14%]"><PixelRock scale={1.2} /></div>
+        <div className="absolute bottom-[65px] left-[24%]"><PixelRock scale={1.0} /></div>
+        <div className="absolute bottom-[60px] right-[22%]"><PixelRock scale={1.3} /></div>
+
+        {/* Fences */}
+        <div className="absolute bottom-[58px] left-[16%]"><PixelFence /></div>
+        <div className="absolute bottom-[55px] right-[16%]"><PixelFence /></div>
+
+        {/* Plants/bushes */}
+        <div className="absolute bottom-[85px] left-[2%]"><PixelPlant /></div>
+        <div className="absolute bottom-[90px] left-[12%]"><PixelPlant /></div>
+        <div className="absolute bottom-[82px] left-[18%]"><PixelPlant /></div>
+        <div className="absolute bottom-[88px] right-[2%]"><PixelPlant /></div>
+        <div className="absolute bottom-[85px] right-[9%]"><PixelPlant /></div>
+        <div className="absolute bottom-[80px] right-[17%]"><PixelPlant /></div>
+        <div className="absolute bottom-[92px] left-[7%]"><PixelPlant /></div>
+        <div className="absolute bottom-[87px] right-[13%]"><PixelPlant /></div>
       </div>
 
       {/* Content wrapper */}
