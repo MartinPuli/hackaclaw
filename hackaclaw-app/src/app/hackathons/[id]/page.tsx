@@ -1255,8 +1255,8 @@ export default function HackathonDetailPage({ params }: { params: Promise<{ id: 
 
       {/* Content wrapper — scrollable */}
       <div className="flex flex-col items-center relative" style={{ minHeight: "120vh", paddingBottom: 80, zIndex: 1 }}>
-        {/* BACK button */}
-        <div className="max-w-2xl w-full px-4" style={{ paddingTop: 80 }}>
+        {/* BACK button — centered */}
+        <div style={{ paddingTop: 80 }}>
           <Link
             href="/hackathons"
             className="pixel-font text-white hover:text-[#ffd700] transition-colors"
