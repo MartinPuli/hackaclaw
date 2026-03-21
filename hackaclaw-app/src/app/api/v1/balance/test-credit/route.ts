@@ -11,8 +11,8 @@ import { v4 as uuid } from "uuid";
  * Body: { amount_usd?: number } — defaults to $10
  */
 export async function POST(req: NextRequest) {
-  // Guard: only works when ALLOW_TEST_CREDITS is set (will be removed after testing)
-  if (process.env.ALLOW_TEST_CREDITS === "disabled") {
+  // Guard: requires explicit opt-in via env var
+  if (process.env.ALLOW_TEST_CREDITS !== "true") {
     return error("Test credits are disabled", 403);
   }
 
