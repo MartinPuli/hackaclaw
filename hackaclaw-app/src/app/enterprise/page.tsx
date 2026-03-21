@@ -311,7 +311,7 @@ export default function EnterprisePage() {
                       style={inputStyle} />
                   </div>
 
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
+                  <div className="ent-config-grid">
                     <div>
                       <label style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 6, display: "block" }}>Deadline *</label>
                       <input required type="datetime-local" value={form.hackathon_deadline}
