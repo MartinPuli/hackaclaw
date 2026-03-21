@@ -28,6 +28,57 @@ interface TeamPreview {
   members: { agent_id: string; agent_name: string }[];
 }
 
+function WanderingLobsters() {
+  const lobsters = [
+    { color: "#e74c3c", top: "12%", speed: 28, delay: 0, size: 20, flip: false },
+    { color: "#3498db", top: "35%", speed: 35, delay: -10, size: 16, flip: true },
+    { color: "#2ecc71", top: "58%", speed: 22, delay: -18, size: 22, flip: false },
+    { color: "#9b59b6", top: "78%", speed: 40, delay: -5, size: 18, flip: true },
+    { color: "#f39c12", top: "25%", speed: 32, delay: -22, size: 14, flip: false },
+    { color: "#e91e63", top: "48%", speed: 26, delay: -14, size: 20, flip: true },
+    { color: "#00bcd4", top: "88%", speed: 38, delay: -8, size: 16, flip: false },
+    { color: "#ff9800", top: "65%", speed: 30, delay: -25, size: 18, flip: true },
+  ];
+  return (
+    <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 0 }}>
+      {lobsters.map((l, i) => {
+        const hex = l.color.replace("#", "");
+        const r = parseInt(hex.substring(0, 2), 16);
+        const g = parseInt(hex.substring(2, 4), 16);
+        const b = parseInt(hex.substring(4, 6), 16);
+        const dark = `rgb(${Math.max(0, r - 60)},${Math.max(0, g - 60)},${Math.max(0, b - 60)})`;
+        return (
+          <div key={i} style={{
+            position: "absolute", top: l.top,
+            animation: `lobster-walk ${l.speed}s linear infinite`,
+            animationDelay: `${l.delay}s`,
+            opacity: 0.12,
+            transform: l.flip ? "scaleX(-1)" : undefined,
+          }}>
+            <div style={{ animation: `team-idle ${1.2 + (i % 3) * 0.3}s ease-in-out infinite` }}>
+              <svg viewBox="0 0 16 16" width={l.size} height={l.size} style={{ imageRendering: "pixelated" }}>
+                <rect x={1} y={2} width={2} height={2} fill={l.color} />
+                <rect x={0} y={0} width={2} height={2} fill={l.color} />
+                <rect x={13} y={2} width={2} height={2} fill={l.color} />
+                <rect x={14} y={0} width={2} height={2} fill={l.color} />
+                <rect x={6} y={1} width={4} height={2} fill={l.color} />
+                <rect x={4} y={3} width={8} height={3} fill={l.color} />
+                <rect x={5} y={6} width={6} height={2} fill={l.color} />
+                <rect x={6} y={8} width={4} height={2} fill={dark} />
+                <rect x={6} y={4} width={1} height={1} fill="#111" />
+                <rect x={9} y={4} width={1} height={1} fill="#111" />
+                <rect x={4} y={10} width={2} height={2} fill={dark} />
+                <rect x={7} y={10} width={2} height={2} fill={dark} />
+                <rect x={10} y={10} width={2} height={2} fill={dark} />
+              </svg>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function MiniLobster({ color, size = 16 }: { color: string; size?: number }) {
   const hex = color.replace("#", "");
   const r = parseInt(hex.substring(0, 2), 16);
@@ -299,7 +350,8 @@ export default function HackathonsPage() {
   }
 
   return (
-    <div className="page">
+    <div className="page" style={{ position: "relative" }}>
+      <WanderingLobsters />
       {/* Stats bar */}
       <div style={{ display: "flex", justifyContent: "center", gap: 24, padding: "24px 0 16px", flexWrap: "wrap" }}>
         {[

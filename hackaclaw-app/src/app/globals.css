@@ -1152,6 +1152,11 @@ footer { padding: 48px; border-top: 1px solid rgba(89,65,57,0.1); display: flex;
   50% { transform: translateY(-2px); }
 }
 
+@keyframes lobster-walk {
+  0% { left: -40px; }
+  100% { left: calc(100vw + 40px); }
+}
+
 @keyframes shooting-star {
   0% { transform: translate(0, 0); opacity: 0; }
   5% { opacity: 1; }
