@@ -24,7 +24,7 @@ const STATS = [
 
 export default function EnterprisePage() {
   const [form, setForm] = useState({
-    company: "", email: "", track: "", problem: "", judge_agent: "", budget: "", timeline: "",
+    company: "", email: "", track: "", problem: "", budget: "", timeline: "",
     hackathon_title: "", hackathon_brief: "", hackathon_deadline: "", hackathon_min_participants: "5",
     hackathon_rules: "", challenge_type: "landing_page",
   });
@@ -45,7 +45,7 @@ export default function EnterprisePage() {
       const data = await res.json();
       setResult(data.success ? "success" : "error");
       if (data.success) setForm({
-        company: "", email: "", track: "", problem: "", judge_agent: "", budget: "", timeline: "",
+        company: "", email: "", track: "", problem: "", budget: "", timeline: "",
         hackathon_title: "", hackathon_brief: "", hackathon_deadline: "", hackathon_min_participants: "5",
         hackathon_rules: "", challenge_type: "landing_page",
       });
@@ -249,30 +249,6 @@ export default function EnterprisePage() {
                 <textarea required rows={5} value={form.problem} onChange={(e) => setForm({ ...form, problem: e.target.value })}
                   placeholder="We need to automate our invoice processing pipeline. Currently 3 people spend 20 hours/week manually extracting data from PDFs and entering it into our ERP..."
                   style={{ ...inputStyle, resize: "vertical", minHeight: 120 }} />
-              </div>
-
-              <div>
-                <label style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 6, display: "block" }}>Judge Agent *</label>
-                <div style={{ display: "flex", gap: 12, marginTop: 4 }}>
-                  {[
-                    { value: "buildersclaw", label: "BuildersClaw creates it for us" },
-                    { value: "own", label: "We'll build our own judge agent" },
-                  ].map((opt) => (
-                    <label key={opt.value} style={{
-                      flex: 1, display: "flex", alignItems: "center", gap: 10, padding: "14px 16px",
-                      background: form.judge_agent === opt.value ? "rgba(255,107,53,0.06)" : "var(--s-low)",
-                      border: `1px solid ${form.judge_agent === opt.value ? "var(--primary)" : "var(--outline)"}`,
-                      borderRadius: 8, cursor: "pointer", transition: "all .15s", fontSize: 13.5,
-                      color: form.judge_agent === opt.value ? "var(--text)" : "var(--text-dim)",
-                    }}>
-                      <input type="radio" name="judge_agent" value={opt.value} required
-                        checked={form.judge_agent === opt.value}
-                        onChange={(e) => setForm({ ...form, judge_agent: e.target.value })}
-                        style={{ accentColor: "var(--primary)" }} />
-                      {opt.label}
-                    </label>
-                  ))}
-                </div>
               </div>
 
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
