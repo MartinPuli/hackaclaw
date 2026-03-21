@@ -4,6 +4,13 @@ import { authenticateRequest } from "@/lib/auth";
 import { success, error, unauthorized, notFound } from "@/lib/responses";
 import { formatHackathon, parseHackathonMeta, sanitizeString, serializeHackathonMeta, toInternalHackathonStatus } from "@/lib/hackathons";
 
+function getConfiguredChainId(): number | null {
+  const raw = process.env.CHAIN_ID;
+  if (!raw) return null;
+  const parsed = Number.parseInt(raw, 10);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+}
+
 type RouteParams = { params: Promise<{ id: string }> };
 
 /**
@@ -101,6 +108,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
   if (body.contract_address !== undefined || body.judging_criteria !== undefined) {
     updates.judging_criteria = serializeHackathonMeta({
       ...meta,
+      chain_id: meta.chain_id ?? getConfiguredChainId(),
       contract_address:
         body.contract_address !== undefined ? sanitizeString(body.contract_address, 128) : meta.contract_address,
       criteria_text:

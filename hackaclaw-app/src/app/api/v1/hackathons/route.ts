@@ -12,6 +12,13 @@ function clampInt(val: unknown, min: number, max: number, fallback: number): num
   return Math.max(min, Math.min(max, Math.round(n)));
 }
 
+function getConfiguredChainId(): number | null {
+  const raw = process.env.CHAIN_ID;
+  if (!raw) return null;
+  const parsed = Number.parseInt(raw, 10);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+}
+
 /**
  * POST /api/v1/hackathons — Create a new hackathon. Requires auth.
  */
@@ -52,6 +59,7 @@ export async function POST(req: NextRequest) {
         starts_at: body.starts_at || null,
         ends_at: body.ends_at || null,
         judging_criteria: serializeHackathonMeta({
+          chain_id: getConfiguredChainId(),
           contract_address: sanitizeString(body.contract_address, 128),
           criteria_text: sanitizeString(body.judging_criteria, 4000),
         }),

@@ -8,12 +8,14 @@ const TEAM_COLORS = ["#00c2a8", "#ff8a00", "#ff5c7a", "#5b8cff", "#7a5cff", "#17
 type JsonObject = Record<string, unknown>;
 
 export interface HackathonMeta {
+  chain_id: number | null;
   contract_address: string | null;
   criteria_text: string | null;
   winner_agent_id: string | null;
   winner_team_id: string | null;
   finalization_notes: string | null;
   finalized_at: string | null;
+  finalize_tx_hash: string | null;
   scores: unknown;
 }
 
@@ -49,12 +51,14 @@ export function sanitizeUrl(value: unknown, maxLen = 1024): string | null {
 
 export function parseHackathonMeta(raw: unknown): HackathonMeta {
   const base: HackathonMeta = {
+    chain_id: null,
     contract_address: null,
     criteria_text: null,
     winner_agent_id: null,
     winner_team_id: null,
     finalization_notes: null,
     finalized_at: null,
+    finalize_tx_hash: null,
     scores: null,
   };
 
@@ -67,12 +71,14 @@ export function parseHackathonMeta(raw: unknown): HackathonMeta {
     }
 
     return {
+      chain_id: typeof parsed.chain_id === "number" ? parsed.chain_id : null,
       contract_address: sanitizeString(parsed.contract_address, 128),
       criteria_text: sanitizeString(parsed.criteria_text, 4000),
       winner_agent_id: sanitizeString(parsed.winner_agent_id, 64),
       winner_team_id: sanitizeString(parsed.winner_team_id, 64),
       finalization_notes: sanitizeString(parsed.finalization_notes, 4000),
       finalized_at: sanitizeString(parsed.finalized_at, 128),
+      finalize_tx_hash: sanitizeString(parsed.finalize_tx_hash, 256),
       scores: parsed.scores ?? null,
     };
   } catch {
@@ -83,12 +89,14 @@ export function parseHackathonMeta(raw: unknown): HackathonMeta {
 export function serializeHackathonMeta(meta: Partial<HackathonMeta>): string {
   return JSON.stringify({
     _format: META_VERSION,
+    chain_id: meta.chain_id ?? null,
     contract_address: meta.contract_address ?? null,
     criteria_text: meta.criteria_text ?? null,
     winner_agent_id: meta.winner_agent_id ?? null,
     winner_team_id: meta.winner_team_id ?? null,
     finalization_notes: meta.finalization_notes ?? null,
     finalized_at: meta.finalized_at ?? null,
+    finalize_tx_hash: meta.finalize_tx_hash ?? null,
     scores: meta.scores ?? null,
   });
 }

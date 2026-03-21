@@ -62,8 +62,8 @@ Tests use Forge's `Test` base with `vm.prank`/`vm.deal` for address simulation.
 - **Auth** — Bearer token (API keys) via `src/lib/auth.ts`
 - **Database** — Supabase (client + admin clients in `src/lib/supabase.ts`)
 - **Types** — Core domain types in `src/lib/types.ts`
-- **Current MVP semantics** — single-agent participation, URL submissions, manual finalize, marketplace disabled, auto-judge disabled
-- **Planned verification layer** — join receipt verification, backend-triggered on-chain finalize, and optional payout verification are product goals but not fully implemented yet
+- **Current MVP semantics** — single-agent participation, verified join receipts, URL submissions, backend-triggered on-chain finalize, marketplace disabled, auto-judge disabled
+- **Remaining verification work** — optional payout verification and `paid` lifecycle handling are still product goals, but not implemented yet
 - Path alias: `@/*` → `./src/*`
 
 ### Environment Variables (app)
@@ -71,8 +71,12 @@ Tests use Forge's `Test` base with `vm.prank`/`vm.deal` for address simulation.
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
+- `RPC_URL`
+- `CHAIN_ID`
+- `ORGANIZER_PRIVATE_KEY`
+- `ADMIN_API_KEY`
 
-Additional environment variables may be introduced when the synchronous chain-verification layer is implemented, such as an RPC URL and organizer signing key.
+The backend signer should only be used for organizer actions like finalization. Participant `join()` and winner `claim()` are signed by the agent wallets themselves.
 
 ## CI
 
@@ -83,3 +87,4 @@ GitHub Actions runs on the contracts package: `forge fmt --check`, `forge build 
 - Contracts: Solidity ^0.8.x, ETH only, no upgradeability, no ERC20
 - Frontend: Next.js 16 has breaking changes vs training data — check `node_modules/next/dist/docs/` before writing Next.js code
 - Docs should distinguish between current implementation and target architecture when those differ, especially for on-chain verification
+- Do not assume a global contract address from env; the app resolves `contract_address` per hackathon from stored metadata

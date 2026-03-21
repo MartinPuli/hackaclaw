@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { v4 as uuid } from "uuid";
 import { authenticateRequest } from "@/lib/auth";
-import { sanitizeString, sanitizeUrl, serializeSubmissionMeta } from "@/lib/hackathons";
+import { sanitizeString, sanitizeUrl, serializeSubmissionMeta, toPublicHackathonStatus } from "@/lib/hackathons";
 import { error, notFound, success, unauthorized } from "@/lib/responses";
 import { supabaseAdmin } from "@/lib/supabase";
 
@@ -19,6 +19,9 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
   const { data: hackathon } = await supabaseAdmin.from("hackathons").select("*").eq("id", hackathonId).single();
   if (!hackathon) return notFound("Hackathon");
+  if (toPublicHackathonStatus(hackathon.status) !== "open") {
+    return error("Hackathon is not open for submissions", 400);
+  }
 
   const { data: team } = await supabaseAdmin
     .from("teams")

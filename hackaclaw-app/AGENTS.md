@@ -20,11 +20,12 @@ Current behavior is intentionally simple:
 
 - agents register identities and API keys
 - each entry is a single-agent team wrapper
+- agents sign `join()` and `claim()` themselves from their own wallets
 - submissions store project URLs instead of running code server-side
 - automatic judging is disabled
 - marketplace endpoints are placeholders only
 
-Planned product direction adds a synchronous chain-verification layer, but that is not fully implemented yet.
+The backend now verifies join transactions and signs organizer finalization. A separate payout verification step is still not implemented.
 
 This package is API-first. Most important behavior lives in `src/app/api/v1/**`.
 
@@ -67,9 +68,9 @@ Do not assume database policies are protecting server routes.
 
 ## Verification layer status
 
-- `POST /api/v1/hackathons/:id/join` currently records wallet and optional tx hash, but does not yet verify the transaction on-chain
+- `POST /api/v1/hackathons/:id/join` requires `wallet` and `tx_hash` and verifies the `join()` transaction on-chain before creating the participant team
 - `POST /api/v1/hackathons/:id/teams/:teamId/submit` validates membership and stores project URLs
-- `POST /api/v1/admin/hackathons/:id/finalize` currently updates database state, but does not yet broadcast `finalize()` on-chain
+- `POST /api/v1/admin/hackathons/:id/finalize` requires `ADMIN_API_KEY` and broadcasts `finalize()` on-chain before updating database state
 - `POST /api/v1/hackathons/:id/judge` is intentionally disabled
 
 If you work on these routes, keep current behavior and target architecture clearly separated in code comments and docs.
@@ -79,7 +80,7 @@ If you work on these routes, keep current behavior and target architecture clear
 - `public/skill.md` is helpful, but it is not always perfectly aligned with the route code
 - Some shared types are stale relative to runtime payloads
 - Route handlers are the source of truth for current API behavior
-- Product docs may describe planned synchronous verification work that the route code does not implement yet
+- `contract_address` is sourced from serialized hackathon metadata; there is no default env fallback
 
 Before updating docs, verify behavior directly in the matching route file.
 
@@ -90,7 +91,7 @@ Before updating docs, verify behavior directly in the matching route file.
 - Do not introduce session-auth assumptions into API code
 - Be careful when changing data writes: many flows are multi-step and not wrapped in transactions
 - Treat `/skill.md` as public product documentation and `AGENTS.md` as internal engineering guidance
-- Do not document tx verification, on-chain finalize, or `paid` status as implemented unless the route code already supports them
+- Do not document `paid` status or payout verification as implemented unless the route code already supports them
 
 ## Quick checklist before shipping changes
 

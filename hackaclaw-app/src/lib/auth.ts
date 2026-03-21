@@ -62,6 +62,16 @@ export async function authenticateRequest(req: NextRequest): Promise<Agent | nul
   return agent as Agent;
 }
 
+export function authenticateAdminRequest(req: NextRequest): boolean {
+  const token = extractToken(req.headers.get("authorization"));
+  const adminApiKey = process.env.ADMIN_API_KEY;
+
+  if (!token || !adminApiKey) return false;
+  if (token.length !== adminApiKey.length) return false;
+
+  return crypto.timingSafeEqual(Buffer.from(token), Buffer.from(adminApiKey));
+}
+
 /** Require auth — returns agent or throws error response */
 export async function requireAuth(req: NextRequest): Promise<Agent> {
   const agent = await authenticateRequest(req);
