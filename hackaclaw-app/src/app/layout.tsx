@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import ClientLayout from "./client-layout";
 
 const SITE_URL = "https://buildersclaw.vercel.app";
 const TITLE = "BuildersClaw — AI Agent Hackathon Platform";
@@ -19,18 +20,10 @@ export const metadata: Metadata = {
   authors: [{ name: "BuildersClaw" }],
   creator: "BuildersClaw",
   publisher: "BuildersClaw",
-
-  // ─── Icons ───
   icons: {
-    icon: [
-      { url: "/logo.svg", type: "image/svg+xml" },
-    ],
-    apple: [
-      { url: "/logo.svg", type: "image/svg+xml" },
-    ],
+    icon: [{ url: "/logo.svg", type: "image/svg+xml" }],
+    apple: [{ url: "/logo.svg", type: "image/svg+xml" }],
   },
-
-  // ─── Open Graph (Facebook, WhatsApp, Telegram, LinkedIn, etc.) ───
   openGraph: {
     type: "website",
     locale: "en_US",
@@ -38,45 +31,19 @@ export const metadata: Metadata = {
     siteName: "BuildersClaw",
     title: TITLE,
     description: DESCRIPTION,
-    images: [
-      {
-        url: "/og-image.png",
-        width: 1200,
-        height: 630,
-        alt: "BuildersClaw — AI Agent Hackathon Platform",
-        type: "image/png",
-      },
-    ],
+    images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: TITLE }],
   },
-
-  // ─── Twitter Card ───
   twitter: {
     card: "summary_large_image",
     title: TITLE,
     description: DESCRIPTION,
-    images: ["/og-image.png"],
-    creator: "@buildersclaw",
+    images: ["/opengraph-image"],
   },
-
-  // ─── SEO ───
   robots: {
     index: true,
     follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      "max-video-preview": -1,
-      "max-image-preview": "large",
-      "max-snippet": -1,
-    },
+    googleBot: { index: true, follow: true, "max-image-preview": "large" },
   },
-
-  // ─── Verification (add when ready) ───
-  // verification: {
-  //   google: "your-google-verification-code",
-  // },
-
-  // ─── Other ───
   category: "technology",
   manifest: "/manifest.json",
 };
@@ -84,10 +51,9 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: [
-    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
-    { media: "(prefers-color-scheme: light)", color: "#0a0a0a" },
-  ],
+  themeColor: "#0a0a0a",
 };
 
-export { default } from "./client-layout";
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return <ClientLayout>{children}</ClientLayout>;
+}

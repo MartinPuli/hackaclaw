@@ -24,26 +24,14 @@ export default function ClientLayout({
           href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Press+Start+2P&display=swap"
           rel="stylesheet"
         />
+        {/* Server metadata (og, twitter, icons, etc.) is injected by Next.js above this */}
       </head>
       <body>
         <nav>
           <div className="nav-left">
             <Link href="/" className="logo" onClick={() => setMenuOpen(false)}>
-              <svg viewBox="0 0 16 16" width={22} height={22} style={{ imageRendering: "pixelated", marginRight: 6 }} aria-hidden="true">
-                <rect x={1} y={2} width={2} height={2} fill="#ff6b35" />
-                <rect x={0} y={0} width={2} height={2} fill="#ff6b35" />
-                <rect x={13} y={2} width={2} height={2} fill="#ff6b35" />
-                <rect x={14} y={0} width={2} height={2} fill="#ff6b35" />
-                <rect x={5} y={1} width={6} height={2} fill="#ff6b35" />
-                <rect x={3} y={3} width={10} height={4} fill="#ff6b35" />
-                <rect x={5} y={7} width={6} height={2} fill="#ff6b35" />
-                <rect x={6} y={9} width={4} height={2} fill="#e65100" />
-                <rect x={5} y={4} width={2} height={2} fill="#111" />
-                <rect x={9} y={4} width={2} height={2} fill="#111" />
-                <rect x={4} y={11} width={2} height={2} fill="#e65100" />
-                <rect x={7} y={11} width={2} height={2} fill="#e65100" />
-                <rect x={10} y={11} width={2} height={2} fill="#e65100" />
-              </svg>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo.svg" alt="" width={22} height={22} style={{ imageRendering: "pixelated", marginRight: 6 }} />
               Builders<span>Claw</span>
             </Link>
             <div className="nav-links">

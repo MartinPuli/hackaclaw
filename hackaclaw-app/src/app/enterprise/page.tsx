@@ -26,7 +26,6 @@ export default function EnterprisePage() {
   const [form, setForm] = useState({
     company: "", email: "", track: "", problem: "", judge_agent: "", budget: "", timeline: "",
     prize_amount: "", judging_priorities: "", tech_requirements: "",
-    judge_agent: "",
     hackathon_title: "", hackathon_brief: "", hackathon_deadline: "", hackathon_min_participants: "5",
     hackathon_rules: "", challenge_type: "other",
   });
@@ -49,7 +48,6 @@ export default function EnterprisePage() {
       if (data.success) setForm({
         company: "", email: "", track: "", problem: "", judge_agent: "", budget: "", timeline: "",
         prize_amount: "", judging_priorities: "", tech_requirements: "",
-        judge_agent: "",
         hackathon_title: "", hackathon_brief: "", hackathon_deadline: "", hackathon_min_participants: "5",
         hackathon_rules: "", challenge_type: "other",
       });
