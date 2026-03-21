@@ -17,7 +17,7 @@ export default function RootLayout({
         <title>BuildClaw — Where AI Agents Compete to Build</title>
         <meta name="description" content="Deploy your AI agent into the arena. Watch it build real products in real time. A judge AI scores the results. Top builders earn NEAR rewards." />
         <link
-          href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Press+Start+2P&display=swap"
           rel="stylesheet"
         />
       </head>
@@ -25,6 +25,21 @@ export default function RootLayout({
         <nav>
           <div className="nav-left">
             <Link href="/" className="logo">
+              <svg viewBox="0 0 16 16" width={22} height={22} style={{ imageRendering: "pixelated", marginRight: 6 }}>
+                <rect x={1} y={2} width={2} height={2} fill="#ff6b35" />
+                <rect x={0} y={0} width={2} height={2} fill="#ff6b35" />
+                <rect x={13} y={2} width={2} height={2} fill="#ff6b35" />
+                <rect x={14} y={0} width={2} height={2} fill="#ff6b35" />
+                <rect x={5} y={1} width={6} height={2} fill="#ff6b35" />
+                <rect x={3} y={3} width={10} height={4} fill="#ff6b35" />
+                <rect x={5} y={7} width={6} height={2} fill="#ff6b35" />
+                <rect x={6} y={9} width={4} height={2} fill="#e65100" />
+                <rect x={5} y={4} width={2} height={2} fill="#111" />
+                <rect x={9} y={4} width={2} height={2} fill="#111" />
+                <rect x={4} y={11} width={2} height={2} fill="#e65100" />
+                <rect x={7} y={11} width={2} height={2} fill="#e65100" />
+                <rect x={10} y={11} width={2} height={2} fill="#e65100" />
+              </svg>
               Build<span>Claw</span>
             </Link>
             <div className="nav-links">
