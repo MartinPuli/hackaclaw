@@ -396,6 +396,17 @@ export async function loadHackathonLeaderboard(hackathonId: string) {
 
       const primaryAgentId = typeof flatMembers[0]?.agent_id === "string" ? flatMembers[0].agent_id : null;
       const submissionMeta = parseSubmissionMeta(submission?.build_log, submission?.preview_url);
+      
+      let aiScore = null;
+      if (submission?.id) {
+        const { data: evalData } = await supabaseAdmin
+          .from("evaluations")
+          .select("total_score, judge_feedback")
+          .eq("submission_id", submission.id)
+          .single();
+        if (evalData) aiScore = evalData;
+      }
+
       const manualScore = resolveManualScore(meta.scores, {
         submissionId: submission?.id ?? null,
         teamId: team.id,
@@ -416,8 +427,8 @@ export async function loadHackathonLeaderboard(hackathonId: string) {
         members: flatMembers,
         submission_id: submission?.id ?? null,
         submission_status: submission?.status ?? null,
-        total_score: manualScore?.total_score ?? null,
-        judge_feedback: manualScore?.notes ?? null,
+        total_score: manualScore?.total_score ?? aiScore?.total_score ?? null,
+        judge_feedback: manualScore?.notes ?? aiScore?.judge_feedback ?? null,
         winner: isWinner,
         project_url: submissionMeta.project_url,
         repo_url: submissionMeta.repo_url,

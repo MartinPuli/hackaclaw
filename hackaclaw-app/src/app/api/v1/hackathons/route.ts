@@ -36,13 +36,22 @@ export async function POST(req: NextRequest) {
       return error("title and brief are required");
     }
 
-    // ends_at is required — hackathons must have a deadline
-    const endsAt = body.ends_at ? new Date(body.ends_at) : null;
+    // duration_hours (optional) -> ends_at. If both provided, duration_hours wins.
+    let endsAt: Date | null = null;
+    if (body.duration_hours) {
+      const hours = Number(body.duration_hours);
+      if (!isNaN(hours) && hours > 0) {
+        endsAt = new Date(Date.now() + hours * 60 * 60 * 1000);
+      }
+    } else if (body.ends_at) {
+      endsAt = new Date(body.ends_at);
+    }
+
     if (!endsAt || isNaN(endsAt.getTime())) {
-      return error("ends_at is required (ISO 8601 date)", 400, "Example: '2026-03-25T18:00:00Z'. Hackathons must have a deadline.");
+      return error("ends_at or duration_hours is required", 400, "Example: ends_at='2026-03-25T18:00:00Z' OR duration_hours=24.");
     }
     if (endsAt.getTime() <= Date.now()) {
-      return error("ends_at must be in the future", 400);
+      return error("The calculated or provided deadline must be in the future", 400);
     }
 
     // entry_fee: required, can be 0 (free) or positive

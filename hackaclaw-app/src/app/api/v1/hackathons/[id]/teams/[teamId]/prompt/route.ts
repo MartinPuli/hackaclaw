@@ -7,6 +7,7 @@ import { chatCompletion, estimateCost, type ChatMessage } from "@/lib/openrouter
 import { canAfford, chargeForPrompt, InsufficientBalanceError, PLATFORM_FEE_PCT } from "@/lib/balance";
 import { commitRound, slugify } from "@/lib/github";
 import { sanitizePrompt, sanitizeGeneratedOutput } from "@/lib/prompt-security";
+import { parseHackathonMeta } from "@/lib/hackathons";
 
 type RouteParams = { params: Promise<{ id: string; teamId: string }> };
 
@@ -146,9 +147,21 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     }
   }
 
+  // Parse hackathon meta for judging criteria
+  const hackathonMeta = parseHackathonMeta(hackathon.judging_criteria);
+
   // Build messages — system prompt is ALWAYS platform-controlled (no override)
   const systemPrompt = buildSystemPrompt(
-    hackathon.brief,
+    {
+      title: hackathon.title,
+      brief: hackathon.brief,
+      description: hackathon.description || null,
+      rules: hackathon.rules || null,
+      judging_criteria: hackathonMeta.criteria_text,
+      ends_at: hackathon.ends_at || null,
+      github_repo: hackathon.github_repo || null,
+      team_slug: slugify(team.name),
+    },
     agent.personality || "",
     agent.strategy || "",
     team.name,
@@ -384,7 +397,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 // ─── Prompt builders ───
 
 function buildSystemPrompt(
-  brief: string,
+  hackathon: { title: string; brief: string; description?: string | null; rules?: string | null; judging_criteria?: string | null; ends_at?: string | null; github_repo?: string | null; team_slug?: string },
   personality: string,
   strategy: string,
   teamName: string,
@@ -414,14 +427,26 @@ One file MUST be named "demo.html" — a self-contained HTML file showcasing the
     ? `\nYou are on ROUND ${roundNumber}. The agent is iterating on their previous submission.\nThe previous code is provided in the user message. Apply the agent's new instructions to improve it.\nDo NOT start from scratch — build on the existing code.`
     : "";
 
+  // Build rich hackathon context
+  const hackathonContext = [
+    `HACKATHON: ${hackathon.title}`,
+    "",
+    `CHALLENGE BRIEF:`,
+    hackathon.brief,
+    hackathon.description ? `\nDESCRIPTION:\n${hackathon.description}` : "",
+    hackathon.rules ? `\nRULES:\n${hackathon.rules}` : "",
+    hackathon.judging_criteria ? `\nJUDGING CRITERIA:\n${hackathon.judging_criteria}` : "",
+    hackathon.ends_at ? `\nDEADLINE: ${hackathon.ends_at}` : "",
+    hackathon.github_repo && hackathon.team_slug ? `\nGITHUB REPOSITORY:\nRepo Link: ${hackathon.github_repo}\nYour Team Folder: ${hackathon.github_repo}/tree/main/${hackathon.team_slug}\nAll generated code is committed to your team folder automatically.` : "",
+  ].filter(Boolean).join("\n");
+
   return `You are building a project for team "${teamName}" in a hackathon competition.
 
 AGENT PROFILE:
 ${personality ? `- Personality: ${personality}` : "- No personality defined"}
 ${strategy ? `- Strategy: ${strategy}` : "- No strategy defined"}
 
-CHALLENGE BRIEF:
-${brief}
+${hackathonContext}
 
 ${projectFormat}
 ${iterationContext}
