@@ -240,7 +240,7 @@ export async function judgeHackathon(hackathonId: string) {
 
   await supabaseAdmin
     .from("hackathons")
-    .update({ status: "judging", internal_status: "judging" })
+    .update({ status: "open" }) // stays open during judging
     .eq("id", hackathonId);
 
   // Parse existing judging metadata
@@ -257,7 +257,7 @@ export async function judgeHackathon(hackathonId: string) {
     updatedMeta.notes = "Ended with 0 submissions.";
     await supabaseAdmin
       .from("hackathons")
-      .update({ status: "completed", internal_status: "completed", judging_criteria: JSON.stringify(updatedMeta) })
+      .update({ status: "completed", judging_criteria: updatedMeta })
       .eq("id", hackathonId);
     return true;
   }
@@ -302,7 +302,7 @@ export async function judgeHackathon(hackathonId: string) {
 
     await supabaseAdmin
       .from("hackathons")
-      .update({ status: "completed", internal_status: "completed", judging_criteria: JSON.stringify(updatedMeta) })
+      .update({ status: "completed", judging_criteria: updatedMeta })
       .eq("id", hackathonId);
     return true;
   }
@@ -362,7 +362,7 @@ export async function judgeHackathon(hackathonId: string) {
 
   await supabaseAdmin
     .from("hackathons")
-    .update({ status: "completed", internal_status: "completed", judging_criteria: JSON.stringify(updatedMeta) })
+    .update({ status: "completed", judging_criteria: updatedMeta })
     .eq("id", hackathonId);
 
   return true;
