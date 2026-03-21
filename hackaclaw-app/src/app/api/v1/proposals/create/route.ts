@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
 
   const { data: proposal } = await supabaseAdmin
     .from("enterprise_proposals")
-    .select("id, company, track, problem_description, status, approval_token")
+    .select("id, company, track, problem_description, status, approval_token, prize_amount, judging_priorities, tech_requirements")
     .eq("approval_token", token)
     .single();
 
@@ -31,12 +31,17 @@ export async function GET(req: NextRequest) {
     company: proposal.company,
     track: proposal.track,
     problem: proposal.problem_description,
+    prize_amount: proposal.prize_amount,
+    judging_priorities: proposal.judging_priorities,
+    tech_requirements: proposal.tech_requirements,
   });
 }
 
 /**
  * POST /api/v1/proposals/create — Create a hackathon from an approved proposal.
- * Body: { token, title, brief, ends_at, max_participants?, github_token?, github_owner? }
+ *
+ * Stores the enterprise context (problem, requirements, judging priorities)
+ * in judging_criteria as JSON so the AI judge can use it during evaluation.
  */
 export async function POST(req: NextRequest) {
   try {
@@ -64,7 +69,25 @@ export async function POST(req: NextRequest) {
 
     const maxPart = Math.max(2, Math.min(1000, Number(body.max_participants) || 50));
     const entryFee = Math.max(0, Number(body.entry_fee) || 0);
+    const prizeAmount = Math.max(0, Number(body.prize_amount) || 0);
     const id = uuid();
+
+    // ── Build judging_criteria with full enterprise context ──
+    // This is what the AI judge reads to understand what to evaluate against
+    const judgingCriteria = JSON.stringify({
+      _format: "hackaclaw-mvp-v1",
+      enterprise_problem: proposal.problem_description,
+      enterprise_requirements: sanitizeString(body.tech_requirements, 2000) || proposal.tech_requirements || null,
+      judging_priorities: sanitizeString(body.judging_priorities, 2000) || proposal.judging_priorities || null,
+      criteria_text: sanitizeString(body.rules, 2000),
+      prize_amount: prizeAmount,
+      company: proposal.company,
+      // These get filled after judging
+      winner_agent_id: null,
+      winner_team_id: null,
+      finalized_at: null,
+      notes: null,
+    });
 
     const { error: insertErr } = await supabaseAdmin
       .from("hackathons")
@@ -76,17 +99,18 @@ export async function POST(req: NextRequest) {
         rules: sanitizeString(body.rules, 2000),
         entry_type: entryFee > 0 ? "paid" : "free",
         entry_fee: entryFee,
-        prize_pool: 0,
+        prize_pool: prizeAmount,
         platform_fee_pct: 0.1,
         max_participants: maxPart,
         team_size_min: 1,
         team_size_max: 1,
         build_time_seconds: Math.max(30, Math.min(600, Number(body.build_time_seconds) || 180)),
-        challenge_type: sanitizeString(body.challenge_type, 50) || "landing_page",
+        challenge_type: sanitizeString(body.challenge_type, 50) || "other",
         status: "open",
         created_by: proposal.id,
         starts_at: new Date().toISOString(),
         ends_at: endsAt.toISOString(),
+        judging_criteria: judgingCriteria,
       })
       .select("*")
       .single();
@@ -122,6 +146,7 @@ export async function POST(req: NextRequest) {
       title,
       status: "open",
       ends_at: endsAt.toISOString(),
+      prize_pool: prizeAmount,
       github_repo: repoUrl,
       url: `/hackathons/${id}`,
       message: "Hackathon created successfully!",

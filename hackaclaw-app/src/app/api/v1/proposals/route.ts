@@ -23,6 +23,9 @@ export async function POST(req: NextRequest) {
     const judgeAgent = sanitize(body.judge_agent, 50);
     const budget = sanitize(body.budget, 100);
     const timeline = sanitize(body.timeline, 100);
+    const prizeAmount = sanitize(body.prize_amount, 20);
+    const judgingPriorities = sanitize(body.judging_priorities, 2000);
+    const techRequirements = sanitize(body.tech_requirements, 2000);
 
     if (!company || !email || !problem || !track) {
       return NextResponse.json(
@@ -50,6 +53,9 @@ export async function POST(req: NextRequest) {
         judge_agent: judgeAgent,
         budget,
         timeline,
+        prize_amount: prizeAmount ? Number(prizeAmount) : null,
+        judging_priorities: judgingPriorities,
+        tech_requirements: techRequirements,
         status: "pending",
         created_at: new Date().toISOString(),
       });
@@ -63,7 +69,7 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json(
-      { success: true, data: { id, message: "Proposal submitted. We'll review it and get back to you." } },
+      { success: true, data: { id, message: "Challenge submitted. We'll review it and get back to you." } },
       { status: 201 },
     );
   } catch {

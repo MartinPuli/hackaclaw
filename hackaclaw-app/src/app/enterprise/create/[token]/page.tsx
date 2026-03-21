@@ -3,7 +3,14 @@
 import { useState, useEffect, use } from "react";
 import Link from "next/link";
 
-interface ProposalInfo { company: string; track: string | null; problem: string }
+interface ProposalInfo {
+  company: string;
+  track: string | null;
+  problem: string;
+  prize_amount: number | null;
+  judging_priorities: string | null;
+  tech_requirements: string | null;
+}
 
 export default function CreateHackathonPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = use(params);
@@ -15,6 +22,9 @@ export default function CreateHackathonPage({ params }: { params: Promise<{ toke
     title: "", brief: "", rules: "", ends_at: "", max_participants: "50",
     entry_fee: "0", challenge_type: "landing_page",
     github_token: "", github_owner: "",
+    prize_amount: "",
+    judging_priorities: "",
+    tech_requirements: "",
   });
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<{ hackathon_id: string; url: string; github_repo: string | null } | null>(null);
@@ -30,6 +40,9 @@ export default function CreateHackathonPage({ params }: { params: Promise<{ toke
             ...f,
             title: `${d.data.company} — ${d.data.track || "Challenge"}`,
             brief: d.data.problem,
+            prize_amount: d.data.prize_amount ? String(d.data.prize_amount) : "",
+            judging_priorities: d.data.judging_priorities || "",
+            tech_requirements: d.data.tech_requirements || "",
           }));
         } else {
           setDenied(true);
@@ -47,7 +60,13 @@ export default function CreateHackathonPage({ params }: { params: Promise<{ toke
       const res = await fetch("/api/v1/proposals/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, ...form, max_participants: Number(form.max_participants), entry_fee: Number(form.entry_fee) }),
+        body: JSON.stringify({
+          token,
+          ...form,
+          max_participants: Number(form.max_participants),
+          entry_fee: Number(form.entry_fee),
+          prize_amount: Number(form.prize_amount) || 0,
+        }),
       });
       const data = await res.json();
       if (data.success) {
@@ -106,7 +125,8 @@ export default function CreateHackathonPage({ params }: { params: Promise<{ toke
             Hackathon Created!
           </h1>
           <p style={{ fontSize: 15, color: "var(--text-dim)", lineHeight: 1.7, marginBottom: 32 }}>
-            Your hackathon is live and agents can start joining. Share the link below.
+            Your hackathon is live. Builders can join and start working. They must submit a GitHub repo link before the deadline.
+            When the deadline hits, the AI judge will analyze every repo and pick the winner.
           </p>
           <div style={{
             background: "var(--s-low)", border: "1px solid var(--outline)", borderRadius: 10,
@@ -147,6 +167,7 @@ export default function CreateHackathonPage({ params }: { params: Promise<{ toke
         </h1>
         <p style={{ fontSize: 15, color: "var(--text-dim)", lineHeight: 1.7 }}>
           {proposal?.company} — your proposal was approved. Configure the hackathon details below.
+          Builders will submit GitHub repo links and the AI judge will analyze the code.
         </p>
       </div>
 
@@ -170,21 +191,51 @@ export default function CreateHackathonPage({ params }: { params: Promise<{ toke
         <div>
           <label style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 6, display: "block" }}>Challenge Brief *</label>
           <textarea required rows={6} value={form.brief} onChange={(e) => setForm({ ...form, brief: e.target.value })}
-            placeholder="Detailed description of what agents should build..."
+            placeholder="Detailed description of what builders should build..."
             style={{ ...inputStyle, resize: "vertical", minHeight: 140 }} />
           <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 4 }}>
-            This is what AI agents will read. Be specific about requirements, features, and acceptance criteria.
+            This is what the AI judge will evaluate against. Be specific about requirements, features, and acceptance criteria.
+          </p>
+        </div>
+
+        <div>
+          <label style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 6, display: "block" }}>Tech Requirements</label>
+          <textarea rows={3} value={form.tech_requirements}
+            onChange={(e) => setForm({ ...form, tech_requirements: e.target.value })}
+            placeholder="e.g. Must use Python, PostgreSQL database, REST API, Docker deployment..."
+            style={{ ...inputStyle, resize: "vertical" }} />
+          <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 4 }}>
+            The judge will check submissions against these technical requirements.
+          </p>
+        </div>
+
+        <div>
+          <label style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 6, display: "block" }}>Judging Priorities</label>
+          <textarea rows={2} value={form.judging_priorities}
+            onChange={(e) => setForm({ ...form, judging_priorities: e.target.value })}
+            placeholder="e.g. Code quality over UI. Must have tests. Security is critical..."
+            style={{ ...inputStyle, resize: "vertical" }} />
+          <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 4 }}>
+            Tell the AI judge what matters most. It will weight these criteria higher.
           </p>
         </div>
 
         <div>
           <label style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 6, display: "block" }}>Rules</label>
           <textarea rows={3} value={form.rules} onChange={(e) => setForm({ ...form, rules: e.target.value })}
-            placeholder="Optional constraints: tech stack, file format, must-have features..."
+            placeholder="Optional constraints: must be open source, single repo, no copy-paste from existing projects..."
             style={{ ...inputStyle, resize: "vertical" }} />
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
+          <div>
+            <label style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 6, display: "block" }}>Prize Amount (USD) *</label>
+            <input required type="number" min={0} value={form.prize_amount}
+              onChange={(e) => setForm({ ...form, prize_amount: e.target.value })}
+              placeholder="500"
+              style={inputStyle} />
+            <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 4 }}>Winner gets this</p>
+          </div>
           <div>
             <label style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 6, display: "block" }}>Deadline *</label>
             <input required type="datetime-local" value={form.ends_at}
@@ -215,6 +266,9 @@ export default function CreateHackathonPage({ params }: { params: Promise<{ toke
               <option value="game">Game</option>
               <option value="tool">Tool / Utility</option>
               <option value="api">API / Backend</option>
+              <option value="data_pipeline">Data Pipeline</option>
+              <option value="ai_integration">AI Integration</option>
+              <option value="automation">Process Automation</option>
               <option value="other">Other</option>
             </select>
           </div>
@@ -227,7 +281,7 @@ export default function CreateHackathonPage({ params }: { params: Promise<{ toke
         }}>
           <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>GitHub Repository (optional)</div>
           <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 16, lineHeight: 1.6 }}>
-            Provide a GitHub token to automatically create a public repo where agents commit their code.
+            Provide a GitHub token to automatically create a public repo for the hackathon.
           </p>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             <input value={form.github_token} onChange={(e) => setForm({ ...form, github_token: e.target.value })}
@@ -235,6 +289,21 @@ export default function CreateHackathonPage({ params }: { params: Promise<{ toke
             <input value={form.github_owner} onChange={(e) => setForm({ ...form, github_owner: e.target.value })}
               placeholder="GitHub username / org" style={{ ...inputStyle, fontSize: 12 }} />
           </div>
+        </div>
+
+        {/* How submissions work */}
+        <div style={{
+          background: "rgba(255,107,53,0.04)", border: "1px solid rgba(255,107,53,0.15)", borderRadius: 10,
+          padding: "20px 24px",
+        }}>
+          <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8, color: "var(--primary)" }}>How Submissions Work</div>
+          <ul style={{ fontSize: 12, color: "var(--text-dim)", lineHeight: 2, paddingLeft: 18, margin: 0 }}>
+            <li>Builders join and submit a <strong>GitHub repository link</strong></li>
+            <li>They can resubmit (update their repo link) anytime before the deadline</li>
+            <li>When the deadline hits, the AI judge <strong>fetches and reads all repos</strong></li>
+            <li>The judge scores every submission on 10 criteria (weighted by your priorities)</li>
+            <li>Winner is announced automatically — highest total score wins the prize</li>
+          </ul>
         </div>
 
         {error && (
