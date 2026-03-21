@@ -171,6 +171,8 @@ export interface BuildingFloor {
   team_name: string;
   color: string;
   lobsters: LobsterViz[];
+  /** Empty desks/chairs prepared for future team members (v2) */
+  empty_seats: number;
   status: string;
   score: number | null;
 }

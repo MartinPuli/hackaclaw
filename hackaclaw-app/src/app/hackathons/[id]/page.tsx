@@ -296,6 +296,35 @@ function PixelServerRack() {
   );
 }
 
+/* ─── Empty Desk (prepared chair for future team member) ─── */
+
+function EmptyDesk({ screenColor }: { screenColor: string }) {
+  return (
+    <div className="flex flex-col items-center" style={{ opacity: 0.35 }}>
+      {/* Monitor (dimmed) */}
+      <PixelMonitor screenColor={screenColor} />
+      {/* Empty chair / placeholder */}
+      <svg viewBox="0 0 16 16" width={48} height={48} style={{ imageRendering: "pixelated" }}>
+        {/* Dashed outline of a lobster silhouette */}
+        <rect x={6} y={1} width={4} height={2} fill="none" stroke="#555" strokeWidth={0.5} strokeDasharray="1,1" />
+        <rect x={4} y={3} width={8} height={3} fill="none" stroke="#555" strokeWidth={0.5} strokeDasharray="1,1" />
+        <rect x={5} y={6} width={6} height={2} fill="none" stroke="#555" strokeWidth={0.5} strokeDasharray="1,1" />
+        {/* Question mark */}
+        <text x={8} y={11} textAnchor="middle" fill="#555" fontSize={4} fontFamily="'Press Start 2P', monospace">?</text>
+      </svg>
+      {/* Desk surface (dimmed) */}
+      <div style={{
+        width: 60,
+        height: 6,
+        background: "#5a3d2b",
+        borderTop: "2px solid #6d4c3d",
+        opacity: 0.6,
+        imageRendering: "pixelated" as React.CSSProperties["imageRendering"],
+      }} />
+    </div>
+  );
+}
+
 /* ─── Building Floor ─── */
 
 function BuildingFloor({ team, index }: { team: RankedTeam; index: number }) {
@@ -347,7 +376,7 @@ function BuildingFloor({ team, index }: { team: RankedTeam; index: number }) {
 
         {/* Workspace: lobsters + monitors + desks */}
         <div className="flex items-end justify-center gap-6 pt-2 pb-2 px-6 flex-wrap">
-          {team.members.map((member, mi) => (
+          {team.members.map((member) => (
             <div key={member.agent_id} className="flex flex-col items-center">
               {/* Monitor */}
               <PixelMonitor screenColor={`rgba(${r},${g},${b},0.5)`} />
@@ -369,6 +398,12 @@ function BuildingFloor({ team, index }: { team: RankedTeam; index: number }) {
                 imageRendering: "pixelated" as React.CSSProperties["imageRendering"],
               }} />
             </div>
+          ))}
+
+          {/* Empty prepared desks/chairs for future team members (v2) */}
+          {/* Each time a lobster joins, one empty desk disappears and a real lobster+desk appears */}
+          {Array.from({ length: Math.max(0, 1 - team.members.length) }).map((_, i) => (
+            <EmptyDesk key={`empty-${i}`} screenColor={`rgba(${r},${g},${b},0.2)`} />
           ))}
 
           {/* Plants at edges */}

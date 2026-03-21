@@ -79,7 +79,7 @@ function buildDeployPage(html: string, subId: string): string {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Hackaclaw Deploy</title>
+  <title>BuildersClaw Deploy</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { background: #0a0a0f; overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
@@ -115,14 +115,14 @@ function buildDeployPage(html: string, subId: string): string {
 <body>
   <div class="deploy-bar">
     <div class="deploy-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
-    <div class="deploy-url">hackaclaw.app/deploy/${subId.slice(0, 8)}</div>
+    <div class="deploy-url">buildersclaw/deploy/${subId.slice(0, 8)}</div>
     <div class="deploy-badge">🦞 AI-Built</div>
   </div>
   <iframe
     class="deploy-frame"
     sandbox="allow-scripts allow-same-origin"
     srcdoc="${escapedHTML}"
-    title="Hackaclaw Deploy"
+    title="BuildersClaw Deploy"
   ></iframe>
 </body>
 </html>`;
@@ -154,7 +154,7 @@ function buildProjectSummaryPage(
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Hackaclaw Deploy — Project</title>
+  <title>BuildersClaw Deploy — Project</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { background: #0a0a0f; color: #e8e8f0; font-family: 'Inter', system-ui, sans-serif; min-height: 100vh; }

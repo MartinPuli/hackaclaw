@@ -1,65 +1,37 @@
 import { NextRequest } from "next/server";
-import { supabaseAdmin } from "@/lib/supabase";
-import { authenticateRequest } from "@/lib/auth";
-import { success, created, error, unauthorized, notFound } from "@/lib/responses";
-import { v4 as uuid } from "uuid";
+import { error } from "@/lib/responses";
+import { features } from "@/lib/config";
+
+// ─── v2 FEATURE: MARKETPLACE OFFERS ───
+// Allows team leaders to send hire offers to listed agents,
+// negotiating revenue share percentages.
 
 /**
  * POST /api/v1/marketplace/offers — Send a hire offer.
+ * 🚧 NOT IMPLEMENTED — Planned for v2.
  */
-export async function POST(req: NextRequest) {
-  const agent = await authenticateRequest(req);
-  if (!agent) return unauthorized();
-
-  const body = await req.json();
-  const { listing_id, team_id, offered_share_pct, message } = body;
-
-  if (!listing_id || !team_id || offered_share_pct === undefined) {
-    return error("listing_id, team_id, and offered_share_pct are required");
+export async function POST(_req: NextRequest) {
+  if (!features.marketplace) {
+    return error(
+      "Marketplace offers are not available yet. Coming in v2.",
+      501,
+      "For now, agents compete individually."
+    );
   }
-
-  const { data: listing } = await supabaseAdmin
-    .from("marketplace_listings")
-    .select("*").eq("id", listing_id).eq("status", "active").single();
-  if (!listing) return notFound("Listing");
-
-  const { data: membership } = await supabaseAdmin
-    .from("team_members")
-    .select("*").eq("team_id", team_id).eq("agent_id", agent.id).eq("role", "leader").single();
-  if (!membership) return error("Only team leaders can send offers", 403);
-
-  const offerId = uuid();
-  await supabaseAdmin.from("marketplace_offers").insert({
-    id: offerId, listing_id, team_id,
-    offered_by: agent.id, offered_share_pct,
-    message: message || null,
-  });
-
-  return created({ offer_id: offerId, message: "Offer sent." });
+  return error("Not implemented", 501);
 }
 
 /**
  * GET /api/v1/marketplace/offers — List offers (received/sent).
+ * 🚧 NOT IMPLEMENTED — Planned for v2.
  */
-export async function GET(req: NextRequest) {
-  const agent = await authenticateRequest(req);
-  if (!agent) return unauthorized();
-
-  const direction = req.nextUrl.searchParams.get("direction") || "received";
-
-  if (direction === "received") {
-    const { data: offers } = await supabaseAdmin
-      .from("marketplace_offers")
-      .select("*, marketplace_listings!inner(asking_share_pct, agent_id), teams(name), agents!marketplace_offers_offered_by_fkey(name)")
-      .eq("marketplace_listings.agent_id", agent.id)
-      .order("created_at", { ascending: false });
-    return success(offers || []);
-  } else {
-    const { data: offers } = await supabaseAdmin
-      .from("marketplace_offers")
-      .select("*, marketplace_listings(agent_id, agents(name)), teams(name)")
-      .eq("offered_by", agent.id)
-      .order("created_at", { ascending: false });
-    return success(offers || []);
+export async function GET(_req: NextRequest) {
+  if (!features.marketplace) {
+    return error(
+      "Marketplace offers are not available yet. Coming in v2.",
+      501,
+      "For now, agents compete individually."
+    );
   }
+  return error("Not implemented", 501);
 }

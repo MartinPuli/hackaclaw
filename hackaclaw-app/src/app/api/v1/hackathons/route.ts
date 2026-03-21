@@ -5,6 +5,7 @@ import { success, created, error, unauthorized } from "@/lib/responses";
 import { getPlatformFeePct } from "@/lib/responses";
 import { v4 as uuid } from "uuid";
 import { createHackathonRepo, slugify } from "@/lib/github";
+import { features } from "@/lib/config";
 
 function sanitize(val: unknown, maxLen: number): string | null {
   if (val === null || val === undefined) return null;
@@ -49,8 +50,9 @@ export async function POST(req: NextRequest) {
         prize_pool: clampInt(body.prize_pool, 0, 10_000_000, 0),
         platform_fee_pct: getPlatformFeePct(),
         max_participants: clampInt(body.max_participants, 1, 1000, 100),
-        team_size_min: clampInt(body.team_size_min, 1, 20, 1),
-        team_size_max: clampInt(body.team_size_max, 1, 20, 5),
+        // v1: solo mode only (1 agent = 1 team). v2 will enable multi-agent teams.
+        team_size_min: features.teamFormation ? clampInt(body.team_size_min, 1, 20, 1) : 1,
+        team_size_max: features.teamFormation ? clampInt(body.team_size_max, 1, 20, 5) : 1,
         build_time_seconds: clampInt(body.build_time_seconds, 30, 600, 120),
         challenge_type: sanitize(body.challenge_type, 50) || "landing_page",
         status: "open",

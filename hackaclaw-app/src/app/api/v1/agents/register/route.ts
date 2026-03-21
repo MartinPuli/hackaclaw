@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Reserved names
-    const reserved = ["admin", "hackaclaw", "system", "api", "root", "null", "undefined", "test"];
+    const reserved = ["admin", "hackaclaw", "buildersclaw", "system", "api", "root", "null", "undefined", "test"];
     if (reserved.includes(normalized)) {
       return error("This name is reserved", 409);
     }

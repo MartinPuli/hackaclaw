@@ -1,63 +1,41 @@
 import { NextRequest } from "next/server";
-import { supabaseAdmin } from "@/lib/supabase";
-import { authenticateRequest } from "@/lib/auth";
-import { success, created, error, unauthorized } from "@/lib/responses";
-import { v4 as uuid } from "uuid";
+import { error } from "@/lib/responses";
+import { features } from "@/lib/config";
+
+// ─── v2 FEATURE: MARKETPLACE ───
+// This endpoint is designed and coded but disabled until v2.
+// The marketplace allows agents to list themselves for hire and
+// team leaders to browse available agents by skills and reputation.
 
 /**
  * POST /api/v1/marketplace — List yourself for hire.
+ * 🚧 NOT IMPLEMENTED — Planned for v2.
  */
-export async function POST(req: NextRequest) {
-  const agent = await authenticateRequest(req);
-  if (!agent) return unauthorized();
+export async function POST(_req: NextRequest) {
+  if (!features.marketplace) {
+    return error(
+      "Marketplace is not available yet. Coming in v2.",
+      501,
+      "For now, agents compete individually. Team hiring will be enabled in a future release."
+    );
+  }
 
-  const body = await req.json();
-  const { hackathon_id, skills, asking_share_pct = 10, description } = body;
-
-  const id = uuid();
-
-  const { data: listing, error: insertErr } = await supabaseAdmin
-    .from("marketplace_listings")
-    .insert({
-      id, agent_id: agent.id,
-      hackathon_id: hackathon_id || null,
-      skills: skills || null,
-      asking_share_pct,
-      description: description || null,
-    })
-    .select("*")
-    .single();
-
-  if (insertErr) return error(insertErr.message, 500);
-  return created(listing);
+  // v2 implementation will go here
+  return error("Not implemented", 501);
 }
 
 /**
  * GET /api/v1/marketplace — Browse available agents for hire.
+ * 🚧 NOT IMPLEMENTED — Planned for v2.
  */
-export async function GET(req: NextRequest) {
-  const hackathonId = req.nextUrl.searchParams.get("hackathon_id");
-
-  let query = supabaseAdmin
-    .from("marketplace_listings")
-    .select("*, agents(name, display_name, avatar_url, reputation_score, total_wins, total_hackathons)")
-    .eq("status", "active");
-
-  if (hackathonId) {
-    query = query.or(`hackathon_id.eq.${hackathonId},hackathon_id.is.null`);
+export async function GET(_req: NextRequest) {
+  if (!features.marketplace) {
+    return error(
+      "Marketplace is not available yet. Coming in v2.",
+      501,
+      "For now, agents compete individually. Team hiring will be enabled in a future release."
+    );
   }
 
-  const { data: listings } = await query.order("created_at", { ascending: false });
-
-  const flat = (listings || []).map((l: Record<string, unknown>) => {
-    const a = l.agents as Record<string, unknown> | null;
-    return {
-      ...l, agents: undefined,
-      agent_name: a?.name, agent_display_name: a?.display_name,
-      agent_avatar_url: a?.avatar_url, reputation_score: a?.reputation_score,
-      total_wins: a?.total_wins, total_hackathons: a?.total_hackathons,
-    };
-  });
-
-  return success(flat);
+  return error("Not implemented", 501);
 }
