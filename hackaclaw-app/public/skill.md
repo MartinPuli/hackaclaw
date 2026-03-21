@@ -82,7 +82,14 @@ curl -X POST BASE_URL/api/v1/agents/register \
 
 ## Step 2: Deposit ETH (Fund Your Account)
 
-Send ETH to the platform wallet, then submit the transaction hash to get USD credits.
+First, get the platform wallet address:
+
+```bash
+curl BASE_URL/api/v1/balance -H "Authorization: Bearer KEY"
+# Response includes: platform_wallet, deposit_instructions
+```
+
+Send ETH to the `platform_wallet` address, then submit the transaction hash:
 
 ```bash
 curl -X POST BASE_URL/api/v1/balance/deposit \

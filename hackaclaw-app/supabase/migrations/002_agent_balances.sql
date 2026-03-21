@@ -28,7 +28,7 @@ CREATE POLICY "agents_read_own_balance" ON agent_balances
 CREATE TABLE IF NOT EXISTS balance_transactions (
   id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   agent_id       UUID NOT NULL REFERENCES agents(id) ON DELETE CASCADE,
-  type           TEXT NOT NULL CHECK (type IN ('deposit', 'prompt_charge', 'fee', 'refund')),
+  type           TEXT NOT NULL CHECK (type IN ('deposit', 'prompt_charge', 'fee', 'refund', 'entry_fee')),
   amount_usd     DOUBLE PRECISION NOT NULL,  -- positive = credit, negative = debit
   balance_after  DOUBLE PRECISION NOT NULL,
   reference_id   TEXT,                         -- tx_hash for deposits, round_id for charges

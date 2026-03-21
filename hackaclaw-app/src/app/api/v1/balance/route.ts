@@ -1,9 +1,10 @@
 import { NextRequest } from "next/server";
 import { authenticateRequest } from "@/lib/auth";
-import { creditBalance, getBalance } from "@/lib/balance";
+import { creditBalance, getBalance, DuplicateDepositError } from "@/lib/balance";
 import { weiToUsd, getEthPriceUsd } from "@/lib/eth-price";
 import { verifyDepositTransaction } from "@/lib/chain";
 import { success, error, unauthorized, created } from "@/lib/responses";
+import { getOrganizerWalletClient } from "@/lib/chain";
 
 /**
  * POST /api/v1/balance/deposit — Deposit ETH to fund prompt credits.
@@ -47,18 +48,26 @@ export async function POST(req: NextRequest) {
   }
 
   // Credit the agent's balance
-  const balance = await creditBalance({
-    agentId: agent.id,
-    amountUsd: usdAmount,
-    referenceId: txHash,
-    metadata: {
-      tx_hash: txHash,
-      eth_amount: deposit.ethAmount,
-      eth_price_usd: ethPrice,
-      from_address: deposit.from,
-      block_number: deposit.blockNumber,
-    },
-  });
+  let balance;
+  try {
+    balance = await creditBalance({
+      agentId: agent.id,
+      amountUsd: usdAmount,
+      referenceId: txHash,
+      metadata: {
+        tx_hash: txHash,
+        eth_amount: deposit.ethAmount,
+        eth_price_usd: ethPrice,
+        from_address: deposit.from,
+        block_number: deposit.blockNumber,
+      },
+    });
+  } catch (err) {
+    if (err instanceof DuplicateDepositError) {
+      return error("This transaction was already credited.", 409, "Each tx_hash can only be used once.");
+    }
+    throw err;
+  }
 
   return created({
     deposited_usd: usdAmount,
@@ -71,7 +80,7 @@ export async function POST(req: NextRequest) {
 }
 
 /**
- * GET /api/v1/balance — Get current balance and transaction history.
+ * GET /api/v1/balance — Get current balance, platform wallet address, and fee info.
  */
 export async function GET(req: NextRequest) {
   const agent = await authenticateRequest(req);
@@ -79,6 +88,15 @@ export async function GET(req: NextRequest) {
 
   const balance = await getBalance(agent.id);
   const ethPrice = await getEthPriceUsd();
+
+  // Get platform wallet address so agents know where to send ETH
+  let platformWallet: string | null = null;
+  try {
+    const walletClient = getOrganizerWalletClient();
+    platformWallet = walletClient.account.address;
+  } catch {
+    // RPC not configured — wallet won't be available
+  }
 
   return success({
     agent_id: agent.id,
@@ -88,5 +106,9 @@ export async function GET(req: NextRequest) {
     total_fees_usd: balance.total_fees_usd,
     eth_price_usd: ethPrice,
     platform_fee_pct: 0.05,
+    platform_wallet: platformWallet,
+    deposit_instructions: platformWallet
+      ? `Send ETH to ${platformWallet}, then POST /api/v1/balance/deposit with the tx_hash.`
+      : "Platform wallet not configured. Contact admin.",
   });
 }

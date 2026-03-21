@@ -28,7 +28,7 @@ export interface AgentBalance {
 export interface BalanceTransaction {
   id: string;
   agent_id: string;
-  type: "deposit" | "prompt_charge" | "fee" | "refund";
+  type: "deposit" | "prompt_charge" | "fee" | "refund" | "entry_fee";
   amount_usd: number;
   balance_after: number;
   reference_id: string | null;
@@ -66,6 +66,7 @@ export async function getBalance(agentId: string): Promise<AgentBalance> {
 
 /**
  * Credit funds to an agent's balance (after ETH deposit or direct credit).
+ * Deduplicates by reference_id (tx_hash) — same deposit can't be credited twice.
  */
 export async function creditBalance(options: {
   agentId: string;
@@ -76,6 +77,22 @@ export async function creditBalance(options: {
   const { agentId, amountUsd, referenceId, metadata } = options;
 
   if (amountUsd <= 0) throw new Error("Credit amount must be positive");
+
+  // ── Dedup: reject if this tx_hash was already credited ──
+  if (referenceId) {
+    const { data: existing } = await supabaseAdmin
+      .from("balance_transactions")
+      .select("id")
+      .eq("reference_id", referenceId)
+      .eq("type", "deposit")
+      .single();
+
+    if (existing) {
+      throw new DuplicateDepositError(
+        `Deposit already credited for tx_hash: ${referenceId}`
+      );
+    }
+  }
 
   const balance = await getBalance(agentId);
   const newBalance = balance.balance_usd + amountUsd;
@@ -111,6 +128,9 @@ export async function creditBalance(options: {
  * Charge an agent for a prompt execution.
  * Deducts: model_cost + (model_cost * PLATFORM_FEE_PCT)
  *
+ * Uses a conditional update with .gte() to prevent race conditions.
+ * If two prompts fire concurrently, only one can pass the balance check.
+ *
  * Returns the breakdown: { model_cost, fee, total_charged }
  */
 export async function chargeForPrompt(options: {
@@ -129,6 +149,7 @@ export async function chargeForPrompt(options: {
   const fee = modelCostUsd * PLATFORM_FEE_PCT;
   const totalCharge = modelCostUsd + fee;
 
+  // Step 1: Read current balance
   const balance = await getBalance(agentId);
 
   if (balance.balance_usd < totalCharge) {
@@ -140,17 +161,29 @@ export async function chargeForPrompt(options: {
 
   const newBalance = balance.balance_usd - totalCharge;
 
-  // Update balance
-  await supabaseAdmin
+  // Step 2: Conditional update — only succeeds if balance still >= totalCharge
+  // This prevents double-spend from concurrent requests
+  const { data: updated, error: updateErr } = await supabaseAdmin
     .from("agent_balances")
-    .upsert({
-      agent_id: agentId,
+    .update({
       balance_usd: newBalance,
-      total_deposited_usd: balance.total_deposited_usd,
       total_spent_usd: balance.total_spent_usd + modelCostUsd,
       total_fees_usd: balance.total_fees_usd + fee,
       updated_at: new Date().toISOString(),
-    });
+    })
+    .eq("agent_id", agentId)
+    .gte("balance_usd", totalCharge)
+    .select("balance_usd")
+    .single();
+
+  if (updateErr || !updated) {
+    // Another request drained the balance between check and update
+    const freshBalance = await getBalance(agentId);
+    throw new InsufficientBalanceError(
+      `Insufficient balance (concurrent charge). Need $${totalCharge.toFixed(6)}, have $${freshBalance.balance_usd.toFixed(6)}`,
+      { required: totalCharge, available: freshBalance.balance_usd, fee }
+    );
+  }
 
   // Log prompt charge
   await supabaseAdmin.from("balance_transactions").insert({
@@ -228,5 +261,12 @@ export class InsufficientBalanceError extends Error {
     super(message);
     this.name = "InsufficientBalanceError";
     this.details = details;
+  }
+}
+
+export class DuplicateDepositError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "DuplicateDepositError";
   }
 }
