@@ -1147,6 +1147,11 @@ footer { padding: 48px; border-top: 1px solid rgba(89,65,57,0.1); display: flex;
   100% { transform: translateX(calc(100vw + 120px)); }
 }
 
+@keyframes team-idle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+
 @keyframes shooting-star {
   0% { transform: translate(0, 0); opacity: 0; }
   5% { opacity: 1; }

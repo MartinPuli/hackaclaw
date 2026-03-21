@@ -74,13 +74,17 @@ function TeamStrip({ teams }: { teams: TeamPreview[] }) {
 
   return (
     <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
-      {visible.map((team) => (
+      {visible.map((team, i) => (
         <div key={team.team_id} style={{
           display: "flex", alignItems: "center", gap: 5,
           padding: "5px 10px", borderRadius: 6,
           background: `${team.team_color}18`, border: `1px solid ${team.team_color}30`,
+          animation: `team-idle ${1.5 + i * 0.3}s ease-in-out infinite`,
+          animationDelay: `${i * 0.2}s`,
         }}>
-          <MiniLobster color={team.team_color} size={12} />
+          <div style={{ animation: `pixel-claw-left ${1 + i * 0.2}s ease-in-out infinite` }}>
+            <MiniLobster color={team.team_color} size={12} />
+          </div>
           <span style={{
             fontSize: 10, fontFamily: "'JetBrains Mono', monospace", color: team.team_color,
             fontWeight: 600, whiteSpace: "nowrap", maxWidth: 90, overflow: "hidden", textOverflow: "ellipsis",
@@ -296,25 +300,23 @@ export default function HackathonsPage() {
 
   return (
     <div className="page">
-      <div className="page-header">
-        <div>
-          <div className="breadcrumb">Home {">"} Hackathons</div>
-          <h1>Hackathons</h1>
-        </div>
-        <div className="stats-bar">
-          <div className="stat-item">
-            <div className="stat-val">{openHackathons.length}</div>
-            <div className="stat-lab">Open</div>
+      {/* Stats bar */}
+      <div style={{ display: "flex", justifyContent: "center", gap: 24, padding: "24px 0 16px", flexWrap: "wrap" }}>
+        {[
+          { icon: "●", iconColor: "var(--green)", value: openHackathons.length, label: "OPEN", anim: "pulse 1.5s ease-in-out infinite" },
+          { icon: "◐", iconColor: "var(--gold)", value: closedHackathons.length, label: "CLOSED", anim: "" },
+          { icon: "⬡", iconColor: "var(--primary)", value: hackathons.reduce((sum, h) => sum + h.total_agents, 0), label: "AGENTS", anim: "" },
+        ].map((s) => (
+          <div key={s.label} style={{
+            display: "flex", alignItems: "center", gap: 10,
+            background: "var(--s-low)", border: "2px solid var(--outline)", padding: "10px 20px",
+            imageRendering: "pixelated" as never,
+          }}>
+            <span style={{ fontSize: 14, color: s.iconColor, animation: s.anim || undefined }}>{s.icon}</span>
+            <span className="pixel-font" style={{ fontSize: 16, color: s.iconColor }}>{s.value}</span>
+            <span className="pixel-font" style={{ fontSize: 7, color: "var(--text-muted)" }}>{s.label}</span>
           </div>
-          <div className="stat-item">
-            <div className="stat-val">{closedHackathons.length}</div>
-            <div className="stat-lab">Closed</div>
-          </div>
-          <div className="stat-item">
-            <div className="stat-val">{hackathons.reduce((sum, hackathon) => sum + hackathon.total_agents, 0)}</div>
-            <div className="stat-lab">Total Agents</div>
-          </div>
-        </div>
+        ))}
       </div>
 
       {hackathons.length === 0 && (
