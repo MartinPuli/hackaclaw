@@ -31,6 +31,8 @@ interface RankedTeam {
   completeness_score: number | null;
   judge_feedback: string | null;
   members: TeamMember[];
+  github_repo: string | null;
+  team_slug: string | null;
 }
 
 interface HackathonDetail {
@@ -640,6 +642,16 @@ function ShootingStars() {
 
 /* ─── Building Floor ─── */
 
+function teamProjectUrl(team: RankedTeam): string | null {
+  if (team.github_repo && team.team_slug) {
+    return `${team.github_repo}/tree/main/${team.team_slug}`;
+  }
+  if (team.submission_id) {
+    return `/api/v1/submissions/${team.submission_id}/preview`;
+  }
+  return null;
+}
+
 function BuildingFloor({ team, index }: { team: RankedTeam; index: number }) {
   const palette = getTeamPalette(team.team_color);
 
@@ -662,13 +674,15 @@ function BuildingFloor({ team, index }: { team: RankedTeam; index: number }) {
       {/* Floor content — solid colored walls */}
       <div
         className="relative"
-        role={team.submission_id ? "link" : undefined}
-        tabIndex={team.submission_id ? 0 : undefined}
+        role={teamProjectUrl(team) ? "link" : undefined}
+        tabIndex={teamProjectUrl(team) ? 0 : undefined}
         onClick={() => {
-          if (team.submission_id) window.open(`/api/v1/submissions/${team.submission_id}/preview`, "_blank", "noopener,noreferrer");
+          const url = teamProjectUrl(team);
+          if (url) window.open(url, "_blank", "noopener,noreferrer");
         }}
         onKeyDown={(e) => {
-          if (team.submission_id && (e.key === "Enter" || e.key === " ")) window.open(`/api/v1/submissions/${team.submission_id}/preview`, "_blank", "noopener,noreferrer");
+          const url = teamProjectUrl(team);
+          if (url && (e.key === "Enter" || e.key === " ")) window.open(url, "_blank", "noopener,noreferrer");
         }}
         style={{
           background: `repeating-linear-gradient(
@@ -685,10 +699,10 @@ function BuildingFloor({ team, index }: { team: RankedTeam; index: number }) {
           borderLeft: `16px solid ${wallDark}`,
           borderRight: `16px solid ${wallDark}`,
           imageRendering: "pixelated" as CSSProperties["imageRendering"],
-          cursor: team.submission_id ? "pointer" : "default",
+          cursor: teamProjectUrl(team) ? "pointer" : "default",
           transition: "filter 0.15s ease",
         }}
-        onMouseEnter={(e) => { if (team.submission_id) (e.currentTarget as HTMLDivElement).style.filter = "brightness(1.15)"; }}
+        onMouseEnter={(e) => { if (teamProjectUrl(team)) (e.currentTarget as HTMLDivElement).style.filter = "brightness(1.15)"; }}
         onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.filter = "brightness(1)"; }}
       >
         {/* Team name label */}
@@ -746,7 +760,7 @@ function BuildingFloor({ team, index }: { team: RankedTeam; index: number }) {
         )}
 
         {/* View project hint */}
-        {team.submission_id && (
+        {teamProjectUrl(team) && (
           <div
             className="absolute top-2 right-3 pixel-font"
             style={{
@@ -757,7 +771,7 @@ function BuildingFloor({ team, index }: { team: RankedTeam; index: number }) {
               textShadow: "1px 1px 0 rgba(0,0,0,0.8)",
             }}
           >
-            VIEW PROJECT ↗
+            {team.github_repo ? "VIEW REPO ↗" : "VIEW PROJECT ↗"}
           </div>
         )}
       </div>

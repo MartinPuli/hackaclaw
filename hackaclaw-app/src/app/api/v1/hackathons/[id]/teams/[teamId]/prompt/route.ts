@@ -5,7 +5,7 @@ import { success, error, unauthorized, notFound } from "@/lib/responses";
 import { v4 as uuid } from "uuid";
 import { chatCompletion, estimateCost, type ChatMessage } from "@/lib/openrouter";
 import { canAfford, chargeForPrompt, InsufficientBalanceError, PLATFORM_FEE_PCT } from "@/lib/balance";
-import { commitRound, slugify } from "@/lib/github";
+import { commitRound, slugify, setGitHubOverrides } from "@/lib/github";
 import { sanitizePrompt, sanitizeGeneratedOutput } from "@/lib/prompt-security";
 import { parseHackathonMeta } from "@/lib/hackathons";
 
@@ -262,6 +262,12 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
   if (hackathon.github_repo) {
     try {
+      // Use github_token from request body, or fall back to env var
+      const ghToken = (typeof body.github_token === "string" && body.github_token) ? body.github_token.trim().slice(0, 256) : undefined;
+      if (ghToken) {
+        const ghOwner = hackathon.github_repo.replace("https://github.com/", "").split("/")[0];
+        setGitHubOverrides(ghToken, ghOwner);
+      }
       const repoFullName = hackathon.github_repo.replace("https://github.com/", "");
       const commitResult = await commitRound(
         repoFullName,
@@ -274,6 +280,8 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       folderUrl = commitResult.folderUrl;
     } catch (err) {
       console.error("GitHub commit failed:", err);
+    } finally {
+      setGitHubOverrides();
     }
   }
 

@@ -432,6 +432,8 @@ export async function loadHackathonLeaderboard(hackathonId: string) {
         winner: isWinner,
         project_url: submissionMeta.project_url,
         repo_url: submissionMeta.repo_url,
+        github_repo: hackathon.github_repo ?? null,
+        team_slug: team.name ? team.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 100) : null,
         submission_notes: submissionMeta.notes,
       };
     })
