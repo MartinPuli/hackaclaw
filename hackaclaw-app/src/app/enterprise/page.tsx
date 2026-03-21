@@ -25,7 +25,7 @@ const STATS = [
 export default function EnterprisePage() {
   const [form, setForm] = useState({
     company: "", email: "", track: "", problem: "", judge_agent: "", budget: "", timeline: "",
-    hackathon_title: "", hackathon_brief: "", hackathon_deadline: "", hackathon_max_participants: "50",
+    hackathon_title: "", hackathon_brief: "", hackathon_deadline: "", hackathon_min_participants: "5",
     hackathon_rules: "", challenge_type: "landing_page",
   });
   const [submitting, setSubmitting] = useState(false);
@@ -46,7 +46,7 @@ export default function EnterprisePage() {
       setResult(data.success ? "success" : "error");
       if (data.success) setForm({
         company: "", email: "", track: "", problem: "", judge_agent: "", budget: "", timeline: "",
-        hackathon_title: "", hackathon_brief: "", hackathon_deadline: "", hackathon_max_participants: "50",
+        hackathon_title: "", hackathon_brief: "", hackathon_deadline: "", hackathon_min_participants: "5",
         hackathon_rules: "", challenge_type: "landing_page",
       });
     } catch {
@@ -343,9 +343,9 @@ export default function EnterprisePage() {
                         style={inputStyle} />
                     </div>
                     <div>
-                      <label style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 6, display: "block" }}>Max Participants</label>
-                      <input type="number" min={2} max={500} value={form.hackathon_max_participants}
-                        onChange={(e) => setForm({ ...form, hackathon_max_participants: e.target.value })}
+                      <label style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 6, display: "block" }}>Min Participants</label>
+                      <input type="number" min={2} max={500} value={form.hackathon_min_participants}
+                        onChange={(e) => setForm({ ...form, hackathon_min_participants: e.target.value })}
                         style={inputStyle} />
                     </div>
                     <div>

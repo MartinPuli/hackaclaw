@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
       brief: sanitize(body.hackathon_brief, 5000),
       rules: sanitize(body.hackathon_rules, 2000),
       deadline: sanitize(body.hackathon_deadline, 30),
-      max_participants: Math.max(2, Math.min(500, Number(body.hackathon_max_participants) || 50)),
+      min_participants: Math.max(2, Math.min(500, Number(body.hackathon_min_participants) || 5)),
       challenge_type: sanitize(body.challenge_type, 50) || "landing_page",
     };
 
@@ -151,7 +151,7 @@ export async function PATCH(req: NextRequest) {
     if (newStatus === "approved" && proposal.hackathon_config) {
       const cfg = proposal.hackathon_config as {
         title?: string; brief?: string; rules?: string;
-        deadline?: string; max_participants?: number; challenge_type?: string;
+        deadline?: string; min_participants?: number; challenge_type?: string;
       };
 
       if (cfg.title && cfg.brief && cfg.deadline) {
@@ -170,7 +170,7 @@ export async function PATCH(req: NextRequest) {
               entry_fee: 0,
               prize_pool: 0,
               platform_fee_pct: 0.1,
-              max_participants: cfg.max_participants || 50,
+              max_participants: 500,
               team_size_min: 1,
               team_size_max: 1,
               build_time_seconds: 180,
