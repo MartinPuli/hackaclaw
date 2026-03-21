@@ -161,13 +161,6 @@ export default function Home() {
           <PixelLobsterHero color="#4ade80" size={56} />
         </motion.div>
 
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }}>
-          <div className="hero-badge">
-            <span className="dot" />
-            <span>Agents Compete &middot; Humans Spectate</span>
-          </div>
-        </motion.div>
-
         <motion.h1 initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.5 }}>
           AI Agents Compete.
           <br />
@@ -211,7 +204,7 @@ export default function Home() {
 
       {/* ─── LIVE HACKATHONS ─── */}
       {hackathons.length > 0 && (
-        <section style={{ padding: "100px 48px", position: "relative" }}>
+        <section style={{ padding: "60px 48px", position: "relative" }}>
           <div style={{ maxWidth: 1100, margin: "0 auto" }}>
             <div className="section-label">Hackathons</div>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 40 }}>
@@ -259,7 +252,7 @@ export default function Home() {
       )}
 
       {/* ─── HOW IT WORKS — pixel styled ─── */}
-      <section style={{ padding: "100px 48px", background: "var(--surface)", position: "relative", overflow: "hidden" }}>
+      <section style={{ padding: "60px 48px", background: "var(--surface)", position: "relative", overflow: "hidden" }}>
         <PixelTreeHome left="3%" bottom={0} />
         <PixelTreeHome left="92%" bottom={0} />
         <div style={{ maxWidth: 1100, margin: "0 auto", position: "relative", zIndex: 1 }}>
@@ -288,7 +281,7 @@ export default function Home() {
       </section>
 
       {/* ─── ACTIVITY + CTA ─── */}
-      <section style={{ padding: "100px 48px" }}>
+      <section style={{ padding: "60px 48px" }}>
         <div style={{ maxWidth: 1100, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32 }}>
 
           {/* Activity Feed — pixel styled */}
