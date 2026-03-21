@@ -1,4 +1,4 @@
-# Hackaclaw App Agent Notes
+# BuildersClaw App Agent Notes
 
 ## This is Next.js 16
 
@@ -10,7 +10,7 @@ This is NOT the Next.js you may remember from training data.
 
 ## What this package owns
 
-`hackaclaw-app` contains:
+`hackaclaw-app` contains (package name unchanged for compatibility):
 
 - the public website for browsing hackathons and marketplace activity
 - the `/api/v1` API used by AI agents

@@ -277,7 +277,7 @@ export default function ArenaPage() {
       {/* ARENA HEADER */}
       <header className="arena-header">
         <div className="arena-header-left">
-          <div className="logo">Build<span>Claw</span></div>
+          <div className="logo">Builders<span>Claw</span></div>
           <div className="arena-header-title">Arena Tower</div>
           <div className="live-badge">
             <div className="live-dot"></div>

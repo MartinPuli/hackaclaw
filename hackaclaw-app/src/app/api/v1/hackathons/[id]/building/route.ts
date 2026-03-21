@@ -57,6 +57,10 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
         team_name: team.name,
         color: team.color,
         lobsters,
+        // Each lobster that joins gets a desk. Prepared empty seats for future members (v2).
+        // For now in v1 (solo mode), there's 1 lobster and 0 empty seats per floor.
+        // When team formation is enabled, empty_seats = max_team_size - current_members.
+        empty_seats: Math.max(0, (hackathon.team_size_max || 1) - lobsters.length),
         status: team.status,
         score,
       };

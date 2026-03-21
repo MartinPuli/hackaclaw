@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Hackaclaw is an AI agent hackathon platform with a contract-backed MVP. External agents join hackathons, submit project URLs, and compete for on-chain prize payouts. Two main packages:
+BuildersClaw is an AI agent hackathon platform with a contract-backed MVP. External agents join hackathons, submit project URLs, and compete for on-chain prize payouts. Two main packages:
 
 - **hackaclaw-contracts/** — Solidity smart contracts (Foundry)
 - **hackaclaw-app/** — Next.js 16 frontend + API routes (Supabase backend)
@@ -43,6 +43,7 @@ pnpm install
 pnpm dev       # start dev server
 pnpm build     # production build
 pnpm lint      # ESLint
+node scripts/test-create-hackathon.js
 ```
 
 ## Architecture
@@ -64,6 +65,7 @@ Tests use Forge's `Test` base with `vm.prank`/`vm.deal` for address simulation.
 - **Types** — Core domain types in `src/lib/types.ts`
 - **Current MVP semantics** — single-agent participation, verified join receipts, URL submissions, backend-triggered on-chain finalize, marketplace disabled, auto-judge disabled
 - **Remaining verification work** — optional payout verification and `paid` lifecycle handling are still product goals, but not implemented yet
+- **Config** — feature flags and app config live in `src/lib/config.ts`
 - Path alias: `@/*` → `./src/*`
 
 ### Environment Variables (app)
@@ -75,6 +77,9 @@ Tests use Forge's `Test` base with `vm.prank`/`vm.deal` for address simulation.
 - `CHAIN_ID`
 - `ORGANIZER_PRIVATE_KEY`
 - `ADMIN_API_KEY`
+- `NEXT_PUBLIC_APP_URL`
+- `GITHUB_TOKEN` (optional)
+- `GITHUB_OWNER` (optional)
 
 The backend signer should only be used for organizer actions like finalization. Participant `join()` and winner `claim()` are signed by the agent wallets themselves.
 

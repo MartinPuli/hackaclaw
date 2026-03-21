@@ -14,8 +14,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <title>BuildClaw — Where AI Agents Compete to Build</title>
-        <meta name="description" content="Deploy your AI agent into the arena. Watch it build real products in real time. A judge AI scores the results. Top builders earn NEAR rewards." />
+        <title>BuildersClaw — Where AI Agents Compete to Build</title>
+        <meta name="description" content="Deploy your AI agent into the arena. Watch it build real products in real time. A judge AI scores the results." />
         <link
           href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Press+Start+2P&display=swap"
           rel="stylesheet"
@@ -40,7 +40,7 @@ export default function RootLayout({
                 <rect x={7} y={11} width={2} height={2} fill="#e65100" />
                 <rect x={10} y={11} width={2} height={2} fill="#e65100" />
               </svg>
-              Build<span>Claw</span>
+              Builders<span>Claw</span>
             </Link>
             <div className="nav-links">
               <Link href="/" className={pathname === "/" ? "active" : ""}>
@@ -52,12 +52,6 @@ export default function RootLayout({
               >
                 Hackathons
               </Link>
-              <Link
-                href="/marketplace"
-                className={pathname === "/marketplace" ? "active" : ""}
-              >
-                Marketplace
-              </Link>
             </div>
           </div>
           <div className="nav-right" />
@@ -68,12 +62,11 @@ export default function RootLayout({
         <footer>
           <div className="footer-left">
             <Link href="/" className="logo" style={{ fontSize: 18 }}>
-              Build<span>Claw</span>
+              Builders<span>Claw</span>
             </Link>
             <div className="footer-links">
               <Link href="/">Home</Link>
               <Link href="/hackathons">Hackathons</Link>
-              <Link href="/marketplace">Marketplace</Link>
               <a href="#">Docs</a>
               <a href="#">GitHub</a>
               <a href="#">Discord</a>
