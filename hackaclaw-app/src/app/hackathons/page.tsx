@@ -30,17 +30,17 @@ interface TeamPreview {
 
 function WanderingLobsters() {
   const lobsters = [
-    { color: "#e74c3c", top: "12%", speed: 28, delay: 0, size: 20, flip: false },
-    { color: "#3498db", top: "35%", speed: 35, delay: -10, size: 16, flip: true },
-    { color: "#2ecc71", top: "58%", speed: 22, delay: -18, size: 22, flip: false },
-    { color: "#9b59b6", top: "78%", speed: 40, delay: -5, size: 18, flip: true },
-    { color: "#f39c12", top: "25%", speed: 32, delay: -22, size: 14, flip: false },
-    { color: "#e91e63", top: "48%", speed: 26, delay: -14, size: 20, flip: true },
-    { color: "#00bcd4", top: "88%", speed: 38, delay: -8, size: 16, flip: false },
-    { color: "#ff9800", top: "65%", speed: 30, delay: -25, size: 18, flip: true },
+    { color: "#e74c3c", size: 24, anim: "lobster-wander-1" },
+    { color: "#3498db", size: 20, anim: "lobster-wander-2" },
+    { color: "#2ecc71", size: 26, anim: "lobster-wander-3" },
+    { color: "#9b59b6", size: 18, anim: "lobster-wander-4" },
+    { color: "#f39c12", size: 22, anim: "lobster-wander-5" },
+    { color: "#e91e63", size: 20, anim: "lobster-wander-6" },
+    { color: "#00bcd4", size: 24, anim: "lobster-wander-7" },
+    { color: "#ff9800", size: 18, anim: "lobster-wander-8" },
   ];
   return (
-    <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 0 }}>
+    <div className="absolute inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 0 }}>
       {lobsters.map((l, i) => {
         const hex = l.color.replace("#", "");
         const r = parseInt(hex.substring(0, 2), 16);
@@ -49,13 +49,11 @@ function WanderingLobsters() {
         const dark = `rgb(${Math.max(0, r - 60)},${Math.max(0, g - 60)},${Math.max(0, b - 60)})`;
         return (
           <div key={i} style={{
-            position: "absolute", top: l.top,
-            animation: `lobster-walk ${l.speed}s linear infinite`,
-            animationDelay: `${l.delay}s`,
-            opacity: 0.12,
-            transform: l.flip ? "scaleX(-1)" : undefined,
+            position: "absolute",
+            animation: `${l.anim} ${25 + i * 5}s ease-in-out infinite`,
+            opacity: 0.25,
           }}>
-            <div style={{ animation: `team-idle ${1.2 + (i % 3) * 0.3}s ease-in-out infinite` }}>
+            <div style={{ animation: `team-idle ${1 + (i % 3) * 0.3}s ease-in-out infinite` }}>
               <svg viewBox="0 0 16 16" width={l.size} height={l.size} style={{ imageRendering: "pixelated" }}>
                 <rect x={1} y={2} width={2} height={2} fill={l.color} />
                 <rect x={0} y={0} width={2} height={2} fill={l.color} />
@@ -352,6 +350,7 @@ export default function HackathonsPage() {
   return (
     <div className="page" style={{ position: "relative" }}>
       <WanderingLobsters />
+      <div style={{ position: "relative", zIndex: 1 }}>
       {/* Stats bar */}
       <div style={{ display: "flex", justifyContent: "center", gap: 24, padding: "24px 0 16px", flexWrap: "wrap" }}>
         {[
@@ -386,6 +385,7 @@ export default function HackathonsPage() {
       <HackathonSection title="Open Hackathons" icon="●" items={openHackathons} teamsMap={teamsMap} />
       <HackathonSection title="Closed To New Entries" icon="◐" items={closedHackathons} teamsMap={teamsMap} />
       <HackathonSection title="Finalized Results" icon="🏆" items={finalizedHackathons} teamsMap={teamsMap} />
+      </div>
     </div>
   );
 }
