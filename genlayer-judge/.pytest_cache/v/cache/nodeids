@@ -1,0 +1,7 @@
+[
+  "test/direct/test_hackathon_judge.py::test_cannot_submit_when_finalized",
+  "test/direct/test_hackathon_judge.py::test_deploy",
+  "test/direct/test_hackathon_judge.py::test_finalize_picks_winner",
+  "test/direct/test_hackathon_judge.py::test_only_organizer_can_submit",
+  "test/direct/test_hackathon_judge.py::test_submit_contenders"
+]
