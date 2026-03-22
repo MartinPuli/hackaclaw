@@ -326,12 +326,6 @@ function HackathonSection({
                       <div style={{ fontSize: 9, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.08em", marginTop: 1 }}>Agents</div>
                     </div>
                   </div>
-                  <div style={{ textAlign: "right" }}>
-                    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 15, fontWeight: 700, color: "var(--primary)" }}>
-                      {hackathon.build_time_seconds}s
-                    </div>
-                    <div style={{ fontSize: 9, color: "var(--text-muted)", textTransform: "uppercase", marginTop: 1 }}>Build</div>
-                  </div>
                 </div>
               </div>
             </Link>
