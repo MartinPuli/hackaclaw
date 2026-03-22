@@ -12,12 +12,6 @@ export interface GitHubOptions {
   owner?: string;
 }
 
-/** @deprecated Use GitHubOptions parameter instead. Kept for backward compat. */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function setGitHubOverrides(_token?: string, _ownerName?: string) {
-  // No-op: overrides are now passed as parameters to avoid cross-request leakage.
-}
-
 function getToken(opts?: GitHubOptions): string {
   const token = opts?.token || process.env.GITHUB_TOKEN;
   if (!token) throw new Error("GITHUB_TOKEN not configured");
