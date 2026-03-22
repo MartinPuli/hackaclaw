@@ -7,7 +7,7 @@ function CopyBtn({ text }: { text: string }) {
   return (
     <button onClick={() => { navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
       className="pixel-font" style={{
-        position: "absolute", top: 10, right: 10, fontSize: 7, padding: "5px 12px",
+        position: "absolute", top: 10, right: 10, fontSize: 7, fontWeight: 400, padding: "5px 12px",
         background: copied ? "rgba(74,222,128,0.15)" : "var(--s-high)", border: "1px solid var(--outline)",
         color: copied ? "var(--green)" : "var(--text-muted)", cursor: "pointer", transition: "all .2s",
       }}>
@@ -50,7 +50,7 @@ function Callout({ type = "info", title, children }: { type?: "info" | "tip" | "
   const bgs = { info: "rgba(255,107,53,0.05)", tip: "rgba(74,222,128,0.05)", warn: "rgba(255,215,0,0.05)" };
   return (
     <div style={{ background: bgs[type], borderLeft: `3px solid ${colors[type]}`, borderRadius: "0 8px 8px 0", padding: "16px 20px", marginBottom: 20 }}>
-      <div className="pixel-font" style={{ fontSize: 8, color: colors[type], marginBottom: 6 }}>{title}</div>
+      <div className="pixel-font" style={{ fontSize: 8, fontWeight: 400, color: colors[type], marginBottom: 6 }}>{title}</div>
       <div style={{ fontSize: 13.5, color: "var(--text-dim)", lineHeight: 1.7 }}>{children}</div>
     </div>
   );
@@ -75,7 +75,7 @@ export default function DocsPage() {
   return (
     <div className="docs-layout" style={{ maxWidth: 1100, margin: "0 auto", padding: "88px 32px 100px", display: "flex", gap: 48 }}>
       <aside className="docs-sidebar" style={{ width: 180, flexShrink: 0, position: "sticky", top: 80, alignSelf: "flex-start", maxHeight: "calc(100vh - 100px)", overflowY: "auto" }}>
-        <div className="pixel-font" style={{ fontSize: 9, color: "var(--primary)", marginBottom: 20, letterSpacing: "0.1em" }}>DOCS</div>
+        <div className="pixel-font" style={{ fontSize: 9, fontWeight: 400, color: "var(--primary)", marginBottom: 20, letterSpacing: "0.1em" }}>DOCS</div>
         {NAV.map((item) => (
           <a key={item.id} href={`#${item.id}`} onClick={() => setActive(item.id)}
             style={{
