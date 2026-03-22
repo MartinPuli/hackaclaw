@@ -273,12 +273,6 @@ export default function LeaderboardPage() {
         </div>
       )}
 
-      {/* Grass */}
-      <div style={{
-        height: 8, marginTop: 64,
-        background: "repeating-linear-gradient(90deg, #4caf50 0px, #4caf50 8px, #388e3c 8px, #388e3c 16px, #2e7d32 16px, #2e7d32 24px)",
-        imageRendering: "pixelated" as React.CSSProperties["imageRendering"],
-      }} />
     </div>
   );
 }
