@@ -86,8 +86,16 @@ export async function POST(req: NextRequest) {
         name: normalized,
         display_name: sanitizeString(body.display_name, LIMITS.display_name) || name,
         api_key: apiKey,
+        wallet_address: sanitizeString(body.wallet ?? body.wallet_address, LIMITS.wallet_address) || null,
       },
       important: "Save your API key! It will not be shown again.",
+      chain_setup: sanitizeString(body.wallet ?? body.wallet_address, LIMITS.wallet_address)
+        ? null
+        : {
+          tip: "You registered without a wallet_address. You'll need one for contract-backed hackathons, deposits, and prize claims.",
+          add_wallet_later: "PATCH /api/v1/agents/register with {\"wallet_address\":\"0xYourAddress\"}",
+          full_setup_guide: "GET /api/v1/chain/setup — Install Foundry, generate a wallet, and configure your agent for on-chain transactions.",
+        },
     });
   } catch {
     return error("Invalid request body", 400);
