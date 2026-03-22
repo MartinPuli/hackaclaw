@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { useDeployEscrow } from "@/hooks/useDeployEscrow";
 
@@ -85,11 +85,38 @@ export default function EnterprisePage() {
   const [sponsorFunded, setSponsorFunded] = useState(false);
   const [prizeAmountEth, setPrizeAmountEth] = useState("");
   const [deployedContract, setDeployedContract] = useState<{ contractAddress: string; txHash: string } | null>(null);
+  const [showWalletModal, setShowWalletModal] = useState(false);
+  const [openWalletModalAfterConnect, setOpenWalletModalAfterConnect] = useState(false);
+  const [walletCopied, setWalletCopied] = useState(false);
 
   const { login, authenticated, ready: privyReady } = usePrivy();
   const { wallets } = useWallets();
   const { deploy, isDeploying, error: deployError } = useDeployEscrow();
   const connectedWallet = wallets[0];
+
+  useEffect(() => {
+    if (openWalletModalAfterConnect && connectedWallet) {
+      setShowWalletModal(true);
+      setOpenWalletModalAfterConnect(false);
+    }
+  }, [connectedWallet, openWalletModalAfterConnect]);
+
+  const handleWalletButtonClick = async () => {
+    setWalletCopied(false);
+    if (connectedWallet) {
+      setShowWalletModal(true);
+      return;
+    }
+
+    setOpenWalletModalAfterConnect(true);
+    await login();
+  };
+
+  const copyWalletAddress = async () => {
+    if (!connectedWallet) return;
+    await navigator.clipboard.writeText(connectedWallet.address);
+    setWalletCopied(true);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -144,6 +171,34 @@ export default function EnterprisePage() {
 
       {/* ═══ HERO ═══ */}
       <section className="hero" style={{ position: "relative", overflow: "hidden", textAlign: "center" }}>
+        <div style={{ position: "absolute", top: 24, right: 24, zIndex: 2 }}>
+          <button
+            type="button"
+            onClick={handleWalletButtonClick}
+            disabled={!privyReady}
+            className="btn btn-outline"
+            style={{
+              fontSize: 12,
+              padding: "10px 18px",
+              opacity: privyReady ? 1 : 0.5,
+              minWidth: 180,
+              justifyContent: "center",
+              background: connectedWallet ? "rgba(74,222,128,0.08)" : "rgba(0,0,0,0.35)",
+              borderColor: connectedWallet ? "rgba(74,222,128,0.3)" : undefined,
+              color: connectedWallet ? "var(--green)" : undefined,
+            }}
+          >
+            {connectedWallet
+              ? `${connectedWallet.address.slice(0, 6)}...${connectedWallet.address.slice(-4)}`
+              : "Connect Wallet"}
+          </button>
+          {!privyReady && (
+            <div className="pixel-font" style={{ fontSize: 7, color: "var(--text-muted)", marginTop: 8, textAlign: "right" }}>
+              WALLET UNAVAILABLE
+            </div>
+          )}
+        </div>
+
         <PixelStar style={{ top: "12%", left: "8%" }} />
         <PixelStar style={{ top: "20%", right: "12%" }} />
         <PixelStar style={{ top: "35%", left: "15%" }} />
@@ -659,6 +714,74 @@ export default function EnterprisePage() {
           )}
         </div>
       </section>
+
+      {showWalletModal && connectedWallet && (
+        <div className="pixel-modal-overlay" onClick={() => setShowWalletModal(false)}>
+          <div className="pixel-modal" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              onClick={() => setShowWalletModal(false)}
+              className="pixel-font"
+              style={{
+                position: "absolute",
+                top: 12,
+                right: 12,
+                fontSize: 9,
+                color: "var(--text-muted)",
+                background: "transparent",
+                border: "none",
+                cursor: "pointer",
+              }}
+            >
+              [X]
+            </button>
+
+            <div className="pixel-font" style={{ fontSize: 9, color: "var(--green)", marginBottom: 12 }}>
+              WALLET CONNECTED
+            </div>
+            <h3 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 22, margin: "0 0 10px" }}>
+              Sponsor wallet
+            </h3>
+            <p style={{ fontSize: 13, color: "var(--text-dim)", lineHeight: 1.7, margin: "0 0 18px" }}>
+              Use this wallet when funding an on-chain hackathon escrow.
+            </p>
+
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "12px 14px",
+              background: "rgba(0,0,0,0.35)",
+              border: "1px solid rgba(74,222,128,0.18)",
+              marginBottom: 14,
+            }}>
+              <code style={{ fontSize: 11, color: "var(--green)", flex: 1, wordBreak: "break-all" }}>
+                {connectedWallet.address}
+              </code>
+              <button
+                type="button"
+                onClick={copyWalletAddress}
+                className="pixel-font"
+                style={{
+                  fontSize: 7,
+                  padding: "6px 12px",
+                  background: "var(--s-high)",
+                  border: "1px solid var(--outline)",
+                  color: walletCopied ? "var(--green)" : "var(--gold)",
+                  cursor: "pointer",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {walletCopied ? "COPIED" : "COPY"}
+              </button>
+            </div>
+
+            <button type="button" onClick={() => setShowWalletModal(false)} className="btn btn-primary" style={{ width: "100%" }}>
+              Done
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
