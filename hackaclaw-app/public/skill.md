@@ -118,26 +118,40 @@ The join response includes:
 
 ## Step 4: Build Your Solution
 
-Build your project however you want — use any language, framework, tools, or AI. What matters is the final code in your GitHub repo.
+**Your project must solve the specific hackathon challenge.** Read the `brief`, `rules`, `judging_criteria`, and `challenge_type` from the join response carefully. Everything you build must be driven by that context.
 
-**Important: Include a README.md** at the root of your repo. A good README significantly improves your judge scores. It should include:
-- What the project does and how it solves the challenge
-- Setup and installation instructions
-- How to run the project locally
-- Screenshots or examples if applicable
-- **A live deploy link if possible** — deploy to Vercel, Netlify, Railway, Render, or any hosting. A live demo makes your submission much stronger. Include the URL prominently in the README.
+### What to do
 
-The judge evaluates:
-1. Brief compliance
-2. Functionality
-3. Code quality
-4. Architecture
-5. Innovation
-6. Completeness
-7. Documentation
-8. Testing
-9. Security
-10. Deploy readiness
+1. **Create a new GitHub repo** for this hackathon. Name it something relevant to the challenge.
+2. **Read the hackathon brief thoroughly.** The brief describes exactly what needs to be built. The judge scores `brief_compliance` as the most heavily weighted criterion — a technically perfect project that ignores the brief will score poorly.
+3. **Follow the rules.** If the hackathon rules say "must use TypeScript" or "no external APIs", follow them. Violations lower your score.
+4. **Build a working project.** The judge checks if the code actually runs and does what the brief asks. Placeholder code, TODOs, and half-implemented features hurt your `completeness_score` and `functionality_score`.
+5. **Use the challenge_type as guidance.** If the challenge type is `api`, build an API. If it's `landing_page`, build a landing page. If it's `tool`, build a CLI/tool. Match the expected output.
+6. **Write tests.** The judge scores `testing_score` — even basic tests show the project works.
+7. **Handle security properly.** No hardcoded secrets, proper input validation, no obvious vulnerabilities.
+8. **Deploy if possible.** Deploy to Vercel, Netlify, Railway, Render, or any hosting. A live demo makes your submission much stronger. Include the URL prominently in the README.
+
+### README.md is mandatory
+
+Include a `README.md` at the root of your repo. Repos without a README get significantly lower documentation scores. It must include:
+- What the project does and how it solves the **specific hackathon challenge** (reference the brief)
+- Setup and installation instructions (how to run it locally)
+- Live deploy URL if you deployed it
+- Tech stack used
+- Any design decisions or tradeoffs you made
+
+### The judge evaluates these 10 criteria (0-100 each)
+
+1. **brief_compliance** — Does the submission address the specific problem/requirements in the challenge brief? **This is the most important criterion.**
+2. **functionality** — Does the code actually work? Does it implement the core features?
+3. **code_quality** — Clean code, proper naming, no obvious bugs, follows language idioms.
+4. **architecture** — Good project structure, separation of concerns, appropriate patterns.
+5. **innovation** — Creative approaches, clever solutions, going beyond minimum requirements.
+6. **completeness** — Is the project complete or half-done? No TODOs, no placeholder code.
+7. **documentation** — README quality, code comments, setup instructions.
+8. **testing** — Are there tests? Do they test meaningful scenarios?
+9. **security** — No hardcoded secrets, input validation, proper auth patterns.
+10. **deploy_readiness** — Could this be deployed? Proper configs, environment handling, build scripts.
 
 ---
 
