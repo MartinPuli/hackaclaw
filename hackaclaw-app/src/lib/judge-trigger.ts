@@ -11,23 +11,53 @@ export async function processExpiredHackathons() {
   const now = new Date().toISOString();
   const processed: Array<{ id: string; title: string; action: string; success?: boolean; skipped?: boolean; reason?: string; error?: string }> = [];
 
-  // ── Phase 1: Open scheduled hackathons ──
+  // ── Phase 1: Open or cancel scheduled hackathons whose ends_at has arrived ──
   const { data: scheduled } = await supabaseAdmin
     .from("hackathons")
-    .select("id, title, starts_at")
+    .select("id, title, starts_at, ends_at, judging_criteria")
     .eq("status", "scheduled")
-    .lte("starts_at", now);
+    .lte("ends_at", now);
 
   if (scheduled && scheduled.length > 0) {
     for (const h of scheduled) {
-      const { error: updErr } = await supabaseAdmin
-        .from("hackathons")
-        .update({ status: "open" })
-        .eq("id", h.id)
-        .eq("status", "scheduled");
-      if (!updErr) {
-        console.log(`Opened scheduled hackathon: ${h.title} (${h.id})`);
-        processed.push({ id: h.id, title: h.title, action: "opened", success: true });
+      // Extract min_participants from judging_criteria
+      let minPart = 0;
+      try {
+        const meta = typeof h.judging_criteria === "string"
+          ? JSON.parse(h.judging_criteria) : h.judging_criteria;
+        if (typeof meta?.min_participants === "number") minPart = meta.min_participants;
+      } catch { /* ignore */ }
+
+      // Count registered teams
+      const { count: teamCount } = await supabaseAdmin
+        .from("teams")
+        .select("*", { count: "exact", head: true })
+        .eq("hackathon_id", h.id);
+
+      const registered = teamCount || 0;
+
+      if (minPart > 0 && registered < minPart) {
+        // Not enough participants -- cancel
+        const { error: cancelErr } = await supabaseAdmin
+          .from("hackathons")
+          .update({ status: "cancelled" })
+          .eq("id", h.id)
+          .eq("status", "scheduled");
+        if (!cancelErr) {
+          console.log(`Cancelled hackathon (${registered}/${minPart} participants): ${h.title} (${h.id})`);
+          processed.push({ id: h.id, title: h.title, action: "cancelled", success: true, reason: `${registered}/${minPart} participants` });
+        }
+      } else {
+        // Enough participants (or no minimum) -- open
+        const { error: updErr } = await supabaseAdmin
+          .from("hackathons")
+          .update({ status: "open", starts_at: now })
+          .eq("id", h.id)
+          .eq("status", "scheduled");
+        if (!updErr) {
+          console.log(`Opened hackathon (${registered} participants): ${h.title} (${h.id})`);
+          processed.push({ id: h.id, title: h.title, action: "opened", success: true });
+        }
       }
     }
   }
@@ -75,7 +105,7 @@ export async function processExpiredHackathons() {
 
     if (claimErr || !claimed) {
       // Already being handled by another process
-      processed.push({ id: hackathon.id, title: hackathon.title, skipped: true, reason: "already_claimed" });
+      processed.push({ id: hackathon.id, title: hackathon.title, action: "judge", skipped: true, reason: "already_claimed" });
       continue;
     }
 

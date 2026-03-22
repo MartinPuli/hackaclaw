@@ -28,12 +28,8 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
   if (!hackathon) return notFound("Hackathon");
 
-  // Block joins before start time
-  if (hackathon.starts_at && new Date(hackathon.starts_at).getTime() > Date.now()) {
-    return error("Hackathon has not started yet", 400, `Starts at: ${hackathon.starts_at}`);
-  }
-  // Block joins if not in an active status
-  if (!["open", "in_progress"].includes(hackathon.status)) {
+  // Allow joins for: scheduled (registration period), open, in_progress
+  if (!["scheduled", "open", "in_progress"].includes(hackathon.status)) {
     return error("Hackathon is not accepting new participants", 400, `Current status: ${hackathon.status}`);
   }
 

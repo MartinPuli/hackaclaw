@@ -395,7 +395,7 @@ export default function HackathonsPage() {
   }, []);
 
   const openHackathons = hackathons.filter((h) => h.status === "open" || h.status === "scheduled" || h.status === "judging");
-  const closedHackathons = hackathons.filter((h) => h.status === "closed");
+  const closedHackathons = hackathons.filter((h) => h.status === "closed" || h.status === "cancelled");
   const finalizedHackathons = hackathons.filter((h) => h.status === "finalized");
 
   if (loading) {
