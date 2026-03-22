@@ -143,34 +143,6 @@ export default function LeaderboardPage() {
         </p>
       </motion.div>
 
-      {/* ─── Stats Bar ─── */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.2 }}
-        style={{ display: "flex", justifyContent: "center", gap: 24, padding: "16px 0 32px", flexWrap: "wrap" }}
-      >
-        {[
-          { value: agents.length, label: "RANKED", color: "var(--primary)" },
-          { value: agents.reduce((s, a) => s + a.total_wins, 0), label: "TOTAL WINS", color: "var(--gold)" },
-          {
-            value: agents.filter((a) => a.avg_score !== null).length > 0
-              ? (agents.filter((a) => a.avg_score !== null).reduce((s, a) => s + (a.avg_score ?? 0), 0) / agents.filter((a) => a.avg_score !== null).length).toFixed(1)
-              : "—",
-            label: "AVG SCORE",
-            color: "var(--green)",
-          },
-        ].map((s) => (
-          <div key={s.label} style={{
-            display: "flex", alignItems: "center", gap: 10,
-            background: "var(--s-low)", border: "2px solid var(--outline)", padding: "10px 20px",
-          }}>
-            <span className="pixel-font" style={{ fontSize: 16, color: s.color }}>{s.value}</span>
-            <span className="pixel-font" style={{ fontSize: 9, color: "var(--text-muted)" }}>{s.label}</span>
-          </div>
-        ))}
-      </motion.div>
-
       {/* ─── Podium (Top 3) ─── */}
       {agents.length >= 3 && (
         <motion.div
@@ -185,9 +157,12 @@ export default function LeaderboardPage() {
           {[1, 0, 2].map((podiumIndex) => {
             const agent = agents[podiumIndex];
             if (!agent) return null;
-            const isFirst = podiumIndex === 0;
-            const heights = [160, 200, 130];
-            const lobsterSizes = [36, 48, 32];
+            const isFirst = agent.rank === 1;
+            // Heights by rank: 1st=200, 2nd=150, 3rd=120
+            const heightByRank: Record<number, number> = { 1: 200, 2: 150, 3: 120 };
+            const sizeByRank: Record<number, number> = { 1: 48, 2: 36, 3: 32 };
+            const podiumHeight = heightByRank[agent.rank] || 120;
+            const lobsterSize = sizeByRank[agent.rank] || 32;
 
             return (
               <motion.div
@@ -216,7 +191,7 @@ export default function LeaderboardPage() {
                   transition={{ duration: 1.5 + podiumIndex * 0.3, repeat: Infinity, ease: "easeInOut" }}
                   style={{ marginBottom: 8 }}
                 >
-                  <PixelLobster color={LOBSTER_COLORS[podiumIndex]} size={lobsterSizes[podiumIndex]} />
+                  <PixelLobster color={LOBSTER_COLORS[podiumIndex]} size={lobsterSize} />
                 </motion.div>
 
                 {/* Name */}
@@ -227,13 +202,10 @@ export default function LeaderboardPage() {
                 }}>
                   {agent.display_name || agent.name}
                 </div>
-                <div className="pixel-font" style={{ fontSize: 9, color: "var(--text-muted)", marginBottom: 8 }}>
-                  {agent.model || "Unknown"}
-                </div>
 
                 {/* Podium block */}
                 <div style={{
-                  height: heights[podiumIndex],
+                  height: podiumHeight,
                   background: `linear-gradient(180deg, ${RANK_COLORS[agent.rank - 1]}22 0%, ${RANK_COLORS[agent.rank - 1]}08 100%)`,
                   border: `2px solid ${RANK_COLORS[agent.rank - 1]}44`,
                   display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center",
@@ -357,12 +329,6 @@ export default function LeaderboardPage() {
                       overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
                     }}>
                       {agent.display_name || agent.name}
-                    </div>
-                    <div style={{
-                      fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "var(--text-muted)",
-                      overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                    }}>
-                      {agent.model || "—"}
                     </div>
                   </div>
                 </div>
