@@ -2,25 +2,27 @@ import { supabaseAdmin } from "./supabase";
 import { judgeHackathon } from "./judge";
 
 /**
- * 1. Open scheduled hackathons whose starts_at has arrived.
- * 2. Judge expired hackathons (open OR in_progress) whose ends_at has passed.
+ * 1. Open or cancel scheduled hackathons whose registration deadline (ends_at) has arrived.
+ *    On open: sets ends_at = now + build_time_seconds (the work period).
+ * 2. Judge expired hackathons (open/in_progress) whose work deadline (ends_at) has passed.
  *
- * Called every minute by the Vercel cron (/api/v1/cron/judge).
+ * Called daily by Vercel cron + on-demand via check-deadline + list page visits.
  */
 export async function processExpiredHackathons() {
   const now = new Date().toISOString();
   const processed: Array<{ id: string; title: string; action: string; success?: boolean; skipped?: boolean; reason?: string; error?: string }> = [];
 
-  // ── Phase 1: Open or cancel scheduled hackathons whose ends_at has arrived ──
+  // ── Phase 1: Open or cancel scheduled hackathons whose ends_at (registration deadline) has arrived ──
   const { data: scheduled } = await supabaseAdmin
     .from("hackathons")
-    .select("id, title, starts_at, ends_at, judging_criteria")
+    .select("id, title, starts_at, ends_at, build_time_seconds, judging_criteria")
     .eq("status", "scheduled")
     .lte("ends_at", now);
 
+  const justOpenedIds = new Set<string>();
+
   if (scheduled && scheduled.length > 0) {
     for (const h of scheduled) {
-      // Extract min_participants from judging_criteria
       let minPart = 0;
       try {
         const meta = typeof h.judging_criteria === "string"
@@ -28,7 +30,6 @@ export async function processExpiredHackathons() {
         if (typeof meta?.min_participants === "number") minPart = meta.min_participants;
       } catch { /* ignore */ }
 
-      // Count registered teams
       const { count: teamCount } = await supabaseAdmin
         .from("teams")
         .select("*", { count: "exact", head: true })
@@ -37,7 +38,6 @@ export async function processExpiredHackathons() {
       const registered = teamCount || 0;
 
       if (minPart > 0 && registered < minPart) {
-        // Not enough participants -- cancel
         const { error: cancelErr } = await supabaseAdmin
           .from("hackathons")
           .update({ status: "cancelled" })
@@ -48,21 +48,24 @@ export async function processExpiredHackathons() {
           processed.push({ id: h.id, title: h.title, action: "cancelled", success: true, reason: `${registered}/${minPart} participants` });
         }
       } else {
-        // Enough participants (or no minimum) -- open
+        // Open: set starts_at=now, ends_at=now+build_time_seconds (the WORK deadline)
+        const buildSecs = h.build_time_seconds || 600;
+        const workDeadline = new Date(Date.now() + buildSecs * 1000).toISOString();
         const { error: updErr } = await supabaseAdmin
           .from("hackathons")
-          .update({ status: "open", starts_at: now })
+          .update({ status: "open", starts_at: now, ends_at: workDeadline })
           .eq("id", h.id)
           .eq("status", "scheduled");
         if (!updErr) {
-          console.log(`Opened hackathon (${registered} participants): ${h.title} (${h.id})`);
+          justOpenedIds.add(h.id);
+          console.log(`Opened hackathon (${registered} participants, work until ${workDeadline}): ${h.title} (${h.id})`);
           processed.push({ id: h.id, title: h.title, action: "opened", success: true });
         }
       }
     }
   }
 
-  // ── Phase 2: Judge expired hackathons (open or in_progress) ──
+  // ── Phase 2: Judge expired hackathons (open or in_progress) — skip just-opened ones ──
   const { data: expiredHackathons, error: fetchErr } = await supabaseAdmin
     .from("hackathons")
     .select("id, title, ends_at, judging_criteria, status")
@@ -80,6 +83,9 @@ export async function processExpiredHackathons() {
   }
 
   for (const hackathon of expiredHackathons) {
+    // Skip hackathons that were just opened in Phase 1 (they need time to run)
+    if (justOpenedIds.has(hackathon.id)) continue;
+
     let isCustomJudge = false;
     try {
       const meta = typeof hackathon.judging_criteria === "string"
@@ -91,21 +97,6 @@ export async function processExpiredHackathons() {
     if (isCustomJudge) {
       console.log(`Skipping custom-judge hackathon: ${hackathon.title} (${hackathon.id})`);
       processed.push({ id: hackathon.id, title: hackathon.title, action: "judge", skipped: true, reason: "custom_judge" });
-      continue;
-    }
-
-    // Atomically claim judging slot (only if still "open" or stuck in "judging")
-    const { data: claimed, error: claimErr } = await supabaseAdmin
-      .from("hackathons")
-      .update({ status: "judging" })
-      .eq("id", hackathon.id)
-      .in("status", ["open", "judging"])
-      .select("id")
-      .single();
-
-    if (claimErr || !claimed) {
-      // Already being handled by another process
-      processed.push({ id: hackathon.id, title: hackathon.title, action: "judge", skipped: true, reason: "already_claimed" });
       continue;
     }
 

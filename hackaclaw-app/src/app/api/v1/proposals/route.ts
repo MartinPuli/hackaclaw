@@ -232,9 +232,10 @@ export async function PATCH(req: NextRequest) {
           if (minPart) metaObj.min_participants = minPart;
 
           // If deadline is far enough in the future (>5 min), create as scheduled
+          // ends_at = registration deadline for scheduled, work deadline for immediate
           const startsNow = endsAt.getTime() - Date.now() < 5 * 60_000;
           const hackStatus = startsNow ? "open" : "scheduled";
-          const startsAt = startsNow ? new Date().toISOString() : new Date().toISOString();
+          const startsAt = startsNow ? new Date().toISOString() : null;
 
           const insertPayload = {
               id: hackathonId,

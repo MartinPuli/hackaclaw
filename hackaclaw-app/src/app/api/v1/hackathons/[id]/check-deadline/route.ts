@@ -33,12 +33,13 @@ export async function POST(_req: NextRequest, { params }: RouteParams) {
     return success({ status: "cancelled", already: true });
   }
 
-  // Scheduled hackathon whose ends_at has arrived -- open or cancel
+  // Scheduled hackathon whose registration deadline (ends_at) has arrived -- open or cancel
   if (hackathon.status === "scheduled") {
     if (hackathon.ends_at && new Date(hackathon.ends_at).getTime() <= Date.now()) {
-      // Check min_participants
+      // Fetch full hackathon for build_time_seconds and judging_criteria
+      const { data: full } = await supabaseAdmin.from("hackathons").select("judging_criteria, build_time_seconds").eq("id", id).single();
+
       let minPart = 0;
-      const { data: full } = await supabaseAdmin.from("hackathons").select("judging_criteria").eq("id", id).single();
       try {
         const meta = typeof full?.judging_criteria === "string" ? JSON.parse(full.judging_criteria) : full?.judging_criteria;
         if (typeof meta?.min_participants === "number") minPart = meta.min_participants;
@@ -52,14 +53,15 @@ export async function POST(_req: NextRequest, { params }: RouteParams) {
         return success({ status: "cancelled", reason: `${registered}/${minPart} participants` });
       }
 
-      // Open it, then immediately judge since deadline passed
-      await supabaseAdmin.from("hackathons").update({ status: "open", starts_at: new Date().toISOString() }).eq("id", id).eq("status", "scheduled");
-      try {
-        await judgeHackathon(id);
-        return success({ status: "finalized", judged: true });
-      } catch {
-        return success({ status: "open" });
-      }
+      // Open: set new ends_at = now + build_time_seconds (the WORK deadline)
+      const buildSecs = full?.build_time_seconds || 600;
+      const workDeadline = new Date(Date.now() + buildSecs * 1000).toISOString();
+      await supabaseAdmin.from("hackathons")
+        .update({ status: "open", starts_at: new Date().toISOString(), ends_at: workDeadline })
+        .eq("id", id).eq("status", "scheduled");
+
+      const remaining = Math.ceil(buildSecs);
+      return success({ status: "open", remaining_seconds: remaining });
     }
     return success({ status: "scheduled" });
   }
@@ -81,13 +83,6 @@ export async function POST(_req: NextRequest, { params }: RouteParams) {
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error("Auto-judge error:", msg);
-
-    // Revert to open so it can be retried (by cron or another request)
-    await supabaseAdmin
-      .from("hackathons")
-      .update({ status: "open" })
-      .eq("id", id)
-      .eq("status", "judging");
 
     return error("Failed to judge hackathon: " + msg, 500);
   }

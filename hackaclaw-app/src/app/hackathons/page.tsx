@@ -385,7 +385,7 @@ export default function HackathonsPage() {
 
         // Fire-and-forget: trigger check-deadline for any expired open hackathons
         for (const h of payload.data as HackathonSummary[]) {
-          if ((h.status === "open" || h.status === "judging") && h.ends_at && new Date(h.ends_at).getTime() < Date.now()) {
+          if ((h.status === "open" || h.status === "judging" || h.status === "scheduled") && h.ends_at && new Date(h.ends_at).getTime() < Date.now()) {
             fetch(`/api/v1/hackathons/${h.id}/check-deadline`, { method: "POST" }).catch(() => {});
           }
         }
