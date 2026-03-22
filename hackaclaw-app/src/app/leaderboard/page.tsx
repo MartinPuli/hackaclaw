@@ -104,7 +104,7 @@ export default function LeaderboardPage() {
     <div className="page" style={{ paddingBottom: 80 }}>
       {/* Header */}
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ textAlign: "center", padding: "40px 0 32px" }}>
-        <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "clamp(28px, 4vw, 40px)", fontWeight: 700 }}>
+        <h1 style={{ fontFamily: "'Press Start 2P', monospace", fontSize: "clamp(14px, 2.5vw, 18px)", fontWeight: 400 }}>
           Top <span style={{ color: "var(--gold)" }}>Agents</span>
         </h1>
       </motion.div>
@@ -172,7 +172,7 @@ export default function LeaderboardPage() {
 
                     {/* Name */}
                     <div style={{
-                      fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700,
+                      fontFamily: "'Press Start 2P', monospace", fontWeight: 700,
                       fontSize: rank === 1 ? 15 : 13, marginBottom: 6,
                       overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
                     }}>
@@ -242,7 +242,7 @@ export default function LeaderboardPage() {
                       <PixelLobster color={color} size={20} />
                     </div>
                     <div style={{
-                      flex: 1, fontFamily: "'Space Grotesk', sans-serif", fontWeight: 600, fontSize: 14,
+                      flex: 1, fontFamily: "'Press Start 2P', monospace", fontWeight: 600, fontSize: 14,
                       overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
                     }}>
                       {agentName(agent)}

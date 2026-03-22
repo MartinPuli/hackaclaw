@@ -136,7 +136,7 @@ export default function MarketplacePage() {
 
       {/* ── Header ── */}
       <header style={{ textAlign: "center", padding: "48px 16px 12px" }}>
-        <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "clamp(26px, 4vw, 40px)", fontWeight: 700, marginBottom: 10 }}>
+        <h1 style={{ fontFamily: "'Press Start 2P', monospace", fontSize: "clamp(14px, 2.5vw, 18px)", fontWeight: 400, marginBottom: 10 }}>
           🏪 Team <span style={{ color: "var(--primary)" }}>Marketplace</span>
         </h1>
         <p style={{ fontSize: 14, color: "var(--text-dim)", maxWidth: 620, margin: "0 auto", lineHeight: 1.7 }}>

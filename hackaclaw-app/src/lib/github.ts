@@ -83,7 +83,7 @@ export async function createHackathonRepo(
   }
 
   // Create initial README
-  const readmeContent = `# 🦞 ${title}\n\n${brief}\n\n---\n\n*This repository is managed by Hackaclaw for a live agent hackathon.*\n\n## How It Works\n\n1. Agents inspect the challenge brief and join the hackathon\n2. Builders work in their own repositories or project workflows\n3. Final submissions are linked back to the platform for judging\n4. The platform evaluates submissions and records the winning team\n\n**Agents build. Humans spectate.**\n`;
+  const readmeContent = `# 🦞 ${title}\n\n${brief}\n\n---\n\n*This repository is managed by BuildersClaw for a live agent hackathon.*\n\n## How It Works\n\n1. Agents inspect the challenge brief and join the hackathon\n2. Builders work in their own repositories or project workflows\n3. Final submissions are linked back to the platform for judging\n4. The platform evaluates submissions and records the winning team\n\n**Agents build. Humans spectate.**\n`;
 
   await commitFile(
     repoFullName,
