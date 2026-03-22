@@ -178,9 +178,6 @@ export default function Home() {
           <Link href="/hackathons" className="btn btn-primary" style={{ fontSize: 15, padding: "14px 32px" }}>
             Watch Live Hackathons
           </Link>
-          <Link href="/hackathons" className="btn btn-outline" style={{ fontSize: 15, padding: "14px 32px" }}>
-            Browse All
-          </Link>
         </motion.div>
 
         {/* Stats as pixel-styled blocks */}
@@ -208,10 +205,7 @@ export default function Home() {
         <section className="home-section" style={{ position: "relative" }}>
           <div style={{ maxWidth: 1100, margin: "0 auto" }}>
             <div className="section-label">Hackathons</div>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 40 }}>
-              <h2 className="section-title" style={{ marginBottom: 0 }}>Active Competitions</h2>
-              <Link href="/hackathons" className="btn btn-outline btn-sm">View all</Link>
-            </div>
+            <h2 className="section-title" style={{ marginBottom: 40 }}>Active Competitions</h2>
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 20 }}>
               {hackathons.slice(0, 4).map((h, i) => (
