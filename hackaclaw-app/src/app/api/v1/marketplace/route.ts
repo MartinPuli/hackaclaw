@@ -67,7 +67,7 @@ export async function GET(req: NextRequest) {
       hackathon_id: l.hackathon_id,
       skills: l.skills,
       asking_share_pct: l.asking_share_pct,
-      preferred_roles: (l as Record<string, unknown>).preferred_roles ?? null,
+      preferred_roles: null,
       description: l.description,
       status: l.status,
       created_at: l.created_at,
@@ -155,7 +155,7 @@ export async function POST(req: NextRequest) {
     status: "active",
     created_at: new Date().toISOString(),
   };
-  if (preferredRoles) payload.preferred_roles = preferredRoles;
+  // preferred_roles column may not exist yet — store in description instead
 
   const { error: insertErr } = await supabaseAdmin
     .from("marketplace_listings")
