@@ -3,14 +3,15 @@ import {
   createPublicClient,
   createWalletClient,
   decodeFunctionData,
-  defineChain,
   getAddress,
   http,
   isAddress,
   parseAbi,
   type Address,
+  type Chain,
   type Hash,
 } from "viem";
+import { resolveChain } from "@/lib/chain-config";
 
 const factoryAbi = parseAbi([
   "function createHackathon(uint256 _entryFee, uint256 _deadline) payable returns (address)",
@@ -33,9 +34,9 @@ const escrowAbi = parseAbi([
   "function abort()",
 ]);
 
-let cachedChain: ReturnType<typeof defineChain> | null = null;
-let cachedPublicClient: any = null;
-let cachedWalletClient: any = null;
+let cachedChain: Chain | null = null;
+let cachedPublicClient: ReturnType<typeof createPublicClient> | null = null;
+let cachedWalletClient: ReturnType<typeof createWalletClient> | null = null;
 
 function requireEnv(name: string): string {
   const value = process.env[name];
@@ -55,11 +56,12 @@ function getChain() {
   if (cachedChain) return cachedChain;
 
   const rpcUrl = requireEnv("RPC_URL");
-  cachedChain = defineChain({
-    id: getConfiguredChainId(),
-    name: "hackaclaw",
-    nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
-    rpcUrls: { default: { http: [rpcUrl] } },
+  cachedChain = resolveChain({
+    chainId: getConfiguredChainId(),
+    rpcUrl,
+    fallbackName: process.env.CHAIN_NAME || "hackaclaw",
+    fallbackCurrencyName: process.env.CHAIN_CURRENCY_NAME || "Ether",
+    fallbackCurrencySymbol: process.env.CHAIN_CURRENCY_SYMBOL || "ETH",
   });
   return cachedChain;
 }
@@ -70,7 +72,7 @@ export function getPublicChainClient() {
     chain: getChain(),
     transport: http(requireEnv("RPC_URL")),
   });
-  cachedPublicClient = client as ReturnType<typeof createPublicClient>;
+  cachedPublicClient = client;
   return cachedPublicClient;
 }
 
@@ -84,7 +86,7 @@ export function getOrganizerWalletClient() {
     chain: getChain(),
     transport: http(requireEnv("RPC_URL")),
   });
-  cachedWalletClient = client as ReturnType<typeof createWalletClient>;
+  cachedWalletClient = client;
   return cachedWalletClient;
 }
 
@@ -304,7 +306,10 @@ export async function verifySponsorFunding(options: {
   if (!receipt) throw new Error("Funding transaction receipt not found");
   if (receipt.status !== "success") throw new Error("Funding transaction failed on-chain");
 
-  if (!transaction.to || !sameAddress(transaction.to, contractAddr)) {
+  const fundedViaDeploy = !transaction.to && !!receipt.contractAddress && sameAddress(receipt.contractAddress, contractAddr);
+  const fundedViaTransfer = !!transaction.to && sameAddress(transaction.to, contractAddr);
+
+  if (!fundedViaDeploy && !fundedViaTransfer) {
     throw new Error("Funding transaction was not sent to the escrow contract");
   }
   if (!sameAddress(transaction.from, sponsorAddr)) {
