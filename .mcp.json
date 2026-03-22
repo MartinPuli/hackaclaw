@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "genlayer": {
+      "command": "npx",
+      "args": ["-y", "genlayer-mcp"]
+    }
+  }
+}
