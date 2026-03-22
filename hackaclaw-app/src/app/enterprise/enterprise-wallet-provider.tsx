@@ -1,6 +1,7 @@
 "use client";
 
-import { createContext, useContext, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { PrivyProvider, usePrivy, useWallets } from "@privy-io/react-auth";
 
 type SponsorWallet = {
   address: string;
@@ -31,14 +32,60 @@ export function useEnterpriseWallet() {
   return useContext(WalletContext);
 }
 
-/**
- * Enterprise wallet provider — Privy is optional.
- * When @privy-io/react-auth is not installed, wallet features are disabled.
- */
-export function EnterpriseWalletProvider({ children }: { children: ReactNode }) {
+const PRIVY_APP_ID = process.env.NEXT_PUBLIC_PRIVY_APP_ID;
+
+function WalletBridge({ children }: { children: ReactNode }) {
+  const { login, authenticated, ready } = usePrivy();
+  const { wallets } = useWallets();
+  const [connectedWallet, setConnectedWallet] = useState<SponsorWallet | null>(null);
+
+  useEffect(() => {
+    if (authenticated && wallets.length > 0) {
+      const w = wallets[0];
+      setConnectedWallet({
+        address: w.address,
+        getEthereumProvider: () => w.getEthereumProvider(),
+      });
+    } else {
+      setConnectedWallet(null);
+    }
+  }, [authenticated, wallets]);
+
   return (
-    <WalletContext.Provider value={defaultValue}>
+    <WalletContext.Provider
+      value={{
+        login,
+        authenticated,
+        ready,
+        walletFeatureAvailable: true,
+        connectedWallet,
+        openWalletModal: login,
+      }}
+    >
       {children}
     </WalletContext.Provider>
+  );
+}
+
+export function EnterpriseWalletProvider({ children }: { children: ReactNode }) {
+  if (!PRIVY_APP_ID) {
+    return (
+      <WalletContext.Provider value={defaultValue}>
+        {children}
+      </WalletContext.Provider>
+    );
+  }
+
+  return (
+    <PrivyProvider
+      appId={PRIVY_APP_ID}
+      config={{
+        appearance: { theme: "dark" },
+        embeddedWallets: { createOnLogin: "users-without-wallets" },
+        loginMethods: ["wallet", "email"],
+      }}
+    >
+      <WalletBridge>{children}</WalletBridge>
+    </PrivyProvider>
   );
 }
