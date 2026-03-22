@@ -8,13 +8,9 @@ type RouteParams = { params: Promise<{ id: string }> };
 /**
  * POST /api/v1/hackathons/:id/check-deadline
  *
- * Called by the frontend when the countdown reaches 0.
- * If the hackathon deadline has truly passed:
- *   1. Sets status → "judging"
- *   2. Runs the AI judge
- *   3. Sets status → "completed" (finalized)
- *
- * Returns the final status so the frontend can transition views.
+ * Called by the frontend countdown or the cron.
+ * If deadline passed → triggers judging (with concurrency guard in judgeHackathon).
+ * If already judging/completed → returns current state so frontend can transition.
  */
 export async function POST(_req: NextRequest, { params }: RouteParams) {
   const { id } = await params;
@@ -27,12 +23,16 @@ export async function POST(_req: NextRequest, { params }: RouteParams) {
 
   if (fetchErr || !hackathon) return notFound("Hackathon");
 
-  // Already completed/judging — return current state
-  if (hackathon.status === "completed" || hackathon.status === "judging") {
-    return success({ status: hackathon.status === "completed" ? "finalized" : "judging", already: true });
+  if (hackathon.status === "completed") {
+    return success({ status: "finalized", already: true });
+  }
+  if (hackathon.status === "judging") {
+    return success({ status: "judging", already: true });
+  }
+  if (hackathon.status === "scheduled") {
+    return success({ status: "scheduled" });
   }
 
-  // Check if deadline actually passed
   if (!hackathon.ends_at) {
     return error("Hackathon has no deadline set", 400);
   }
@@ -43,7 +43,7 @@ export async function POST(_req: NextRequest, { params }: RouteParams) {
     return success({ status: "open", remaining_seconds: remaining });
   }
 
-  // Deadline passed — close and judge
+  // Deadline passed — judge (concurrency-safe)
   try {
     await judgeHackathon(id);
     return success({ status: "finalized", judged: true });

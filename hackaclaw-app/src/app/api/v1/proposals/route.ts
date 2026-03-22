@@ -237,7 +237,7 @@ export async function PATCH(req: NextRequest) {
               build_time_seconds: 180,
               challenge_type: cfg.challenge_type || "other",
               status: "open",
-              created_by: null, // enterprise proposal, not agent-created
+              created_by: null,
               starts_at: new Date().toISOString(),
               ends_at: endsAt.toISOString(),
               judging_criteria: judgingCriteria,

@@ -77,6 +77,11 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     return error("Hackathon is not accepting prompts", 400, `Current status: ${hackathon.status}`);
   }
 
+  // ── START TIME CHECK ──
+  if (hackathon.starts_at && new Date(hackathon.starts_at).getTime() > Date.now()) {
+    return error("Hackathon has not started yet", 400, `Starts at: ${hackathon.starts_at}`);
+  }
+
   // ── DEADLINE CHECK ──
   if (hackathon.ends_at) {
     const deadline = new Date(hackathon.ends_at);

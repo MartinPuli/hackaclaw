@@ -333,9 +333,9 @@ export default function HackathonsPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const openHackathons = hackathons.filter((hackathon) => hackathon.status === "open");
-  const closedHackathons = hackathons.filter((hackathon) => hackathon.status === "closed");
-  const finalizedHackathons = hackathons.filter((hackathon) => hackathon.status === "finalized");
+  const openHackathons = hackathons.filter((h) => h.status === "open" || h.status === "scheduled" || h.status === "judging");
+  const closedHackathons = hackathons.filter((h) => h.status === "closed");
+  const finalizedHackathons = hackathons.filter((h) => h.status === "finalized");
 
   if (loading) {
     return (

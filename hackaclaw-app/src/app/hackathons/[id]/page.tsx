@@ -884,6 +884,8 @@ function HackathonBadge({
                   <span style={{
                     color: hackathon.status === "finalized" ? "#ffd700"
                       : hackathon.status === "open" ? "#00ffaa"
+                      : hackathon.status === "judging" ? "#ffa500"
+                      : hackathon.status === "scheduled" ? "#87ceeb"
                       : "#87ceeb",
                   }}>
                     {hackathon.status.toUpperCase().replace("_", " ")}

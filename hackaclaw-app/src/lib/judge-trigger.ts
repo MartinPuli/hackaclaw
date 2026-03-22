@@ -2,36 +2,54 @@ import { supabaseAdmin } from "./supabase";
 import { judgeHackathon } from "./judge";
 
 /**
- * Find hackathons that have passed their ends_at deadline and trigger judging.
- * Only triggers for platform-judged hackathons. Custom-judge hackathons wait
- * for the enterprise's own judge agent to submit scores.
- * 
- * Called by the cron endpoint (/api/v1/cron/judge).
+ * 1. Open scheduled hackathons whose starts_at has arrived.
+ * 2. Judge expired hackathons (open OR in_progress) whose ends_at has passed.
+ *
+ * Called every minute by the Vercel cron (/api/v1/cron/judge).
  */
 export async function processExpiredHackathons() {
   const now = new Date().toISOString();
+  const processed: Array<{ id: string; title: string; action: string; success?: boolean; skipped?: boolean; reason?: string; error?: string }> = [];
 
-  // Find hackathons where ends_at has passed and they are still 'open'
-  const { data: expiredHackathons, error } = await supabaseAdmin
+  // ── Phase 1: Open scheduled hackathons ──
+  const { data: scheduled } = await supabaseAdmin
+    .from("hackathons")
+    .select("id, title, starts_at")
+    .eq("status", "scheduled")
+    .lte("starts_at", now);
+
+  if (scheduled && scheduled.length > 0) {
+    for (const h of scheduled) {
+      const { error: updErr } = await supabaseAdmin
+        .from("hackathons")
+        .update({ status: "open" })
+        .eq("id", h.id)
+        .eq("status", "scheduled");
+      if (!updErr) {
+        console.log(`Opened scheduled hackathon: ${h.title} (${h.id})`);
+        processed.push({ id: h.id, title: h.title, action: "opened", success: true });
+      }
+    }
+  }
+
+  // ── Phase 2: Judge expired hackathons (open or in_progress) ──
+  const { data: expiredHackathons, error: fetchErr } = await supabaseAdmin
     .from("hackathons")
     .select("id, title, ends_at, judging_criteria")
     .lt("ends_at", now)
-    .eq("status", "open");
+    .in("status", ["open", "in_progress"]);
 
-  if (error) {
-    console.error("Error fetching expired hackathons:", error);
-    return { count: 0, processed: [] };
+  if (fetchErr) {
+    console.error("Error fetching expired hackathons:", fetchErr);
+    return { count: processed.length, processed };
   }
 
   if (!expiredHackathons || expiredHackathons.length === 0) {
-    console.log("No expired hackathons to judge.");
-    return { count: 0, processed: [] };
+    if (processed.length === 0) console.log("No hackathons to process.");
+    return { count: processed.length, processed };
   }
 
-  const processed = [];
-
   for (const hackathon of expiredHackathons) {
-    // Skip custom-judge hackathons — they wait for the enterprise's judge agent
     let isCustomJudge = false;
     try {
       const meta = typeof hackathon.judging_criteria === "string"
@@ -41,19 +59,19 @@ export async function processExpiredHackathons() {
     } catch { /* ignore */ }
 
     if (isCustomJudge) {
-      console.log(`Skipping custom-judge hackathon: ${hackathon.title} (${hackathon.id}) — waiting for enterprise judge agent`);
-      processed.push({ id: hackathon.id, title: hackathon.title, skipped: true, reason: "custom_judge" });
+      console.log(`Skipping custom-judge hackathon: ${hackathon.title} (${hackathon.id})`);
+      processed.push({ id: hackathon.id, title: hackathon.title, action: "judge", skipped: true, reason: "custom_judge" });
       continue;
     }
 
     try {
-      console.log(`Starting automated judging for hackathon: ${hackathon.title} (${hackathon.id})`);
+      console.log(`Auto-judging: ${hackathon.title} (${hackathon.id})`);
       await judgeHackathon(hackathon.id);
-      processed.push({ id: hackathon.id, title: hackathon.title, success: true });
+      processed.push({ id: hackathon.id, title: hackathon.title, action: "judged", success: true });
     } catch (e: unknown) {
       const errMsg = e instanceof Error ? e.message : String(e);
-      console.error(`Failed to judge hackathon ${hackathon.id}:`, e);
-      processed.push({ id: hackathon.id, title: hackathon.title, success: false, error: errMsg });
+      console.error(`Failed to judge hackathon ${hackathon.id}:`, errMsg);
+      processed.push({ id: hackathon.id, title: hackathon.title, action: "judge", success: false, error: errMsg });
     }
   }
 
