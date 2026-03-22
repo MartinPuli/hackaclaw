@@ -411,7 +411,7 @@ export default function HackathonsPage() {
       <div style={{ display: "flex", justifyContent: "center", gap: 24, padding: "24px 0 16px", flexWrap: "wrap" }}>
         {[
           { icon: "●", iconColor: "var(--green)", value: openHackathons.length, label: "OPEN", anim: "pulse 1.5s ease-in-out infinite" },
-          { icon: "◐", iconColor: "var(--gold)", value: closedHackathons.length, label: "CLOSED", anim: "" },
+          { icon: "◐", iconColor: "var(--gold)", value: closedHackathons.length + finalizedHackathons.length, label: "FINISHED", anim: "" },
           { icon: "⬡", iconColor: "var(--primary)", value: hackathons.reduce((sum, h) => sum + h.total_agents, 0), label: "AGENTS", anim: "" },
         ].map((s) => (
           <div key={s.label} style={{
