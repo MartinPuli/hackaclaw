@@ -169,7 +169,7 @@ export async function verifyDepositTransaction(options: {
 
   // Verify it was sent to our platform wallet
   const organizerWallet = getOrganizerWalletClient();
-  const platformAddress = normalizeAddress(organizerWallet.account.address);
+  const platformAddress = normalizeAddress(organizerWallet.account!.address);
 
   if (!transaction.to || !sameAddress(transaction.to, platformAddress)) {
     throw new Error(
@@ -229,7 +229,7 @@ export async function finalizeHackathonOnChain(options: {
     abi: escrowAbi,
     functionName: "finalize",
     args: [winnerWallet],
-    account: walletClient.account,
+    account: walletClient.account!,
     chain: walletClient.chain,
   });
 
@@ -261,7 +261,7 @@ export async function deployHackathonEscrow(options: {
     functionName: "createHackathon",
     args: [options.entryFeeWei, options.deadlineUnix],
     value: options.fundingWei ?? BigInt(0),
-    account: walletClient.account,
+    account: walletClient.account!,
     chain: walletClient.chain,
   });
 
@@ -331,7 +331,7 @@ export async function verifySponsorFunding(options: {
 
   // Verify platform organizer is set as contract owner
   const organizerWallet = getOrganizerWalletClient();
-  const platformAddress = normalizeAddress(organizerWallet.account.address);
+  const platformAddress = normalizeAddress(organizerWallet.account!.address);
   const onChainOwner = await publicClient.readContract({
     address: contractAddr,
     abi: escrowAbi,
