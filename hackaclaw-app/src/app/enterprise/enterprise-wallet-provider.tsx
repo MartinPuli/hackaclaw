@@ -81,8 +81,6 @@ export function EnterpriseWalletProvider({ children }: { children: ReactNode }) 
       appId={PRIVY_APP_ID}
       config={{
         appearance: { theme: "dark" },
-        embeddedWallets: { createOnLogin: "users-without-wallets" },
-        loginMethods: ["wallet", "email"],
       }}
     >
       <WalletBridge>{children}</WalletBridge>
