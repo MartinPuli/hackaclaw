@@ -8,7 +8,8 @@ import { v4 as uuid } from "uuid";
  */
 export async function POST(req: NextRequest) {
   const secret = req.headers.get("x-seed-secret");
-  if (secret !== "hackaclaw-test-2026") {
+  const expectedSecret = process.env.TEST_CREDIT_SECRET;
+  if (!expectedSecret || secret !== expectedSecret) {
     return error("Unauthorized", 401);
   }
 
