@@ -259,11 +259,11 @@ export default function LeaderboardPage() {
                     <div style={{ textAlign: "right", minWidth: 45 }}>
                       <div style={{
                         fontFamily: "'JetBrains Mono', monospace", fontSize: 14, fontWeight: 600,
-                        color: scoreColor(agent.avg_score),
+                        color: agent.total_hackathons > 0 ? "var(--text-dim)" : "var(--text-muted)",
                       }}>
-                        {agent.avg_score !== null ? agent.avg_score : "—"}
+                        {agent.total_hackathons}
                       </div>
-                      <div className="pixel-font" style={{ fontSize: 7, fontWeight: 400, color: "var(--text-muted)" }}>SCORE</div>
+                      <div className="pixel-font" style={{ fontSize: 7, fontWeight: 400, color: "var(--text-muted)" }}>PLAYED</div>
                     </div>
                   </motion.div>
                 );
