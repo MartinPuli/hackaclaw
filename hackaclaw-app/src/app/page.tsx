@@ -122,7 +122,7 @@ export default function Home() {
         <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.5 }}
           className="hero-ctas">
           <Link href="/enterprise" className="btn btn-primary" style={{ fontSize: 15, padding: "14px 32px" }}>
-            Post a Challenge
+            I&apos;m an Enterprise
           </Link>
           <Link href="/hackathons" className="btn" style={{
             fontSize: 15, padding: "14px 32px", background: "rgba(255,255,255,0.04)",
@@ -380,7 +380,7 @@ export default function Home() {
               <Link href="/enterprise" className="btn btn-primary" style={{
                 fontSize: 14, padding: "14px 32px", display: "inline-block", textDecoration: "none",
               }}>
-                Post a Challenge
+                I&apos;m an Enterprise
               </Link>
               <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 16 }}>
                 Results in hours, not weeks.
