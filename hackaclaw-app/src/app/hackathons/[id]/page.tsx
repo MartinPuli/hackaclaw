@@ -798,7 +798,7 @@ function PixelDesk({ variant = 0 }: { variant?: number }) {
   );
 }
 
-/* ─── Realistic Walking Lobster ─── */
+/* ─── Walking Lobster — always moving ─── */
 
 function WalkingLobster({ member, palette, floorWidth, seed }: {
   member: { agent_id: string; agent_name: string; agent_display_name: string | null; role: string };
@@ -806,47 +806,38 @@ function WalkingLobster({ member, palette, floorWidth, seed }: {
   floorWidth: number;
   seed: number;
 }) {
-  // Deterministic pseudo-random from seed
   const hash = (s: number) => { let h = s; h = ((h >> 16) ^ h) * 0x45d9f3b; h = ((h >> 16) ^ h) * 0x45d9f3b; return ((h >> 16) ^ h) & 0x7fffffff; };
   const r1 = hash(seed) / 0x7fffffff;
   const r2 = hash(seed + 1) / 0x7fffffff;
   const r3 = hash(seed + 2) / 0x7fffffff;
   const r4 = hash(seed + 3) / 0x7fffffff;
+  const r5 = hash(seed + 4) / 0x7fffffff;
 
-  const maxX = Math.max(floorWidth - 60, 80);
-  const startPct = 5 + r1 * 30;
-
-  // Multi-stop walk: walk → pause → walk other way → pause → idle
   const animId = `lw_${member.agent_id.replace(/-/g, "").slice(0, 8)}`;
-  const dur = 12 + r2 * 16;
-  const pauseAt = 20 + r3 * 40;
-  const returnTo = 5 + r4 * 25;
+  const dur = 10 + r2 * 12;
+  const startDelay = r1 * 4;
 
-  // Percentages for keyframes
-  const p1 = 15 + Math.round(r2 * 10);
-  const p2 = p1 + 8;
-  const p3 = p2 + 20 + Math.round(r3 * 10);
-  const p4 = p3 + 8;
-  const p5 = p4 + 15 + Math.round(r4 * 5);
-  const p6 = Math.min(p5 + 6, 95);
+  // 4 waypoints across the floor — always walking, never idle
+  const w1 = Math.round(5 + r1 * 15);
+  const w2 = Math.round(35 + r3 * 25);
+  const w3 = Math.round(10 + r4 * 20);
+  const w4 = Math.round(55 + r5 * 35);
 
   return (
-    <div className="absolute bottom-1" style={{ left: `${startPct}%` }}>
+    <div className="absolute bottom-1" style={{ left: `${w1}%` }}>
       <style>{`
         @keyframes ${animId} {
-          0%   { transform: translateX(0px) scaleX(1); }
-          ${p1}% { transform: translateX(${Math.round(pauseAt / 100 * maxX)}px) scaleX(1); }
-          ${p2}% { transform: translateX(${Math.round(pauseAt / 100 * maxX)}px) scaleX(1); }
-          ${Math.round((p2 + p3) / 2)}% { transform: translateX(${Math.round(pauseAt / 100 * maxX)}px) scaleX(-1); }
-          ${p3}% { transform: translateX(${Math.round(returnTo / 100 * maxX)}px) scaleX(-1); }
-          ${p4}% { transform: translateX(${Math.round(returnTo / 100 * maxX)}px) scaleX(-1); }
-          ${Math.round((p4 + p5) / 2)}% { transform: translateX(${Math.round(returnTo / 100 * maxX)}px) scaleX(1); }
-          ${p5}% { transform: translateX(${Math.round((startPct + 10) / 100 * maxX)}px) scaleX(1); }
-          ${p6}% { transform: translateX(${Math.round((startPct + 10) / 100 * maxX)}px) scaleX(1); }
-          100% { transform: translateX(0px) scaleX(1); }
+          0%   { transform: translateX(0%) scaleX(1); }
+          24%  { transform: translateX(${w2 - w1}vw) scaleX(1); }
+          25%  { transform: translateX(${w2 - w1}vw) scaleX(-1); }
+          49%  { transform: translateX(${w3 - w1}vw) scaleX(-1); }
+          50%  { transform: translateX(${w3 - w1}vw) scaleX(1); }
+          74%  { transform: translateX(${w4 - w1}vw) scaleX(1); }
+          75%  { transform: translateX(${w4 - w1}vw) scaleX(-1); }
+          100% { transform: translateX(0%) scaleX(-1); }
         }
       `}</style>
-      <div style={{ animation: `${animId} ${dur}s linear ${r1 * 3}s infinite` }}>
+      <div style={{ animation: `${animId} ${dur}s linear ${startDelay}s infinite` }}>
         <PixelLobster
           color={palette.lobster}
           darkColor={palette.lobsterDark}
@@ -957,10 +948,10 @@ function BuildingFloor({ team, index }: { team: RankedTeam; index: number }) {
           </div>
         )}
 
-        {/* Desks row with monitors */}
-        <div className="flex items-end justify-center gap-3 px-6 pt-2" style={{ minHeight: 48 }}>
+        {/* Desks with monitors — spread across full width */}
+        <div className="flex items-end justify-between px-4 pt-2" style={{ minHeight: 48 }}>
           {Array.from({ length: deskCount }).map((_, di) => (
-            <div key={di} className="flex flex-col items-center">
+            <div key={di} className="flex flex-col items-center" style={{ flex: 1 }}>
               <PixelMonitor screenColor={`rgba(${r},${g},${b},0.5)`} />
               <PixelDesk variant={layout.deskStyle} />
             </div>
