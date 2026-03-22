@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { authenticateAdminRequest, hashToken } from "@/lib/auth";
 import { serializeHackathonMeta } from "@/lib/hackathons";
+import { verifySponsorFunding, getContractPrizePool } from "@/lib/chain";
 import { v4 as uuid } from "uuid";
 
 function sanitize(val: unknown, max: number): string | null {
@@ -37,7 +38,7 @@ export async function POST(req: NextRequest) {
     const judgingPriorities = sanitize(body.judging_priorities, 2000);
     const techRequirements = sanitize(body.tech_requirements, 2000);
 
-    const hackathonConfig = {
+    const hackathonConfig: Record<string, unknown> = {
       title: sanitize(body.hackathon_title, 200),
       brief: sanitize(body.hackathon_brief, 5000),
       rules: sanitize(body.hackathon_rules, 2000),
@@ -47,6 +48,37 @@ export async function POST(req: NextRequest) {
       contract_address: sanitize(body.contract_address, 128),
       chain_id: Number.isInteger(Number(body.chain_id)) ? Number(body.chain_id) : null,
     };
+
+    // Sponsor funding: if contract_address and funding_tx_hash provided, verify on-chain
+    const fundingTxHash = sanitize(body.funding_tx_hash, 128);
+    const sponsorWallet = sanitize(body.sponsor_wallet, 128);
+
+    if (fundingTxHash && hackathonConfig.contract_address) {
+      if (!sponsorWallet) {
+        return NextResponse.json(
+          { success: false, error: { message: "sponsor_wallet is required when funding_tx_hash is provided" } },
+          { status: 400 },
+        );
+      }
+
+      try {
+        const funding = await verifySponsorFunding({
+          contractAddress: hackathonConfig.contract_address as string,
+          sponsorWallet,
+          txHash: fundingTxHash,
+        });
+
+        hackathonConfig.funding_tx_hash = fundingTxHash;
+        hackathonConfig.sponsor_wallet = sponsorWallet;
+        hackathonConfig.funding_verified = true;
+        hackathonConfig.funding_amount_wei = funding.prizePoolWei.toString();
+      } catch (verifyErr) {
+        return NextResponse.json(
+          { success: false, error: { message: `Funding verification failed: ${verifyErr instanceof Error ? verifyErr.message : "unknown error"}` } },
+          { status: 400 },
+        );
+      }
+    }
 
     if (!hackathonConfig.title || !hackathonConfig.brief || !hackathonConfig.deadline) {
       return NextResponse.json(
@@ -113,8 +145,15 @@ export async function POST(req: NextRequest) {
     // Build response
     const responseData: Record<string, unknown> = {
       id,
-      message: "Challenge submitted. We'll review it and get back to you.",
+      message: hackathonConfig.funding_verified
+        ? "Sponsored challenge submitted and funding verified on-chain. Pending admin approval."
+        : "Challenge submitted. We'll review it and get back to you.",
     };
+
+    if (hackathonConfig.funding_verified) {
+      responseData.funding_verified = true;
+      responseData.funding_amount_wei = hackathonConfig.funding_amount_wei;
+    }
 
     // If custom judge, return the key — this is the ONLY time it's shown
     if (judgeKey) {
@@ -201,6 +240,9 @@ export async function PATCH(req: NextRequest) {
         judge_key_hash?: string;
         contract_address?: string;
         chain_id?: number | null;
+        funding_verified?: boolean;
+        sponsor_wallet?: string;
+        funding_amount_wei?: string;
       };
 
       if (cfg.title && cfg.brief && cfg.deadline) {
@@ -220,9 +262,33 @@ export async function PATCH(req: NextRequest) {
         // Allow past deadlines on approve — admin may want to adjust later
         hackathonId = uuid();
 
+          // If sponsor-funded, re-verify contract still has funds
+          let prizePool = Number(proposal.prize_amount) || 0;
+          let sponsorAddress: string | null = null;
+
+          if (cfg.funding_verified && cfg.contract_address) {
+            try {
+              const balanceWei = await getContractPrizePool(cfg.contract_address);
+              if (balanceWei <= BigInt(0)) {
+                return NextResponse.json(
+                  { success: false, error: { message: "Escrow contract has no funds. Sponsor may have called abort()." } },
+                  { status: 400 },
+                );
+              }
+              prizePool = Number(balanceWei) / 1e18;
+              sponsorAddress = cfg.sponsor_wallet || null;
+            } catch (chainErr) {
+              return NextResponse.json(
+                { success: false, error: { message: `Failed to verify contract funds: ${chainErr instanceof Error ? chainErr.message : "unknown error"}` } },
+                { status: 400 },
+              );
+            }
+          }
+
           const judgingCriteria = serializeHackathonMeta({
             chain_id: typeof cfg.chain_id === "number" ? cfg.chain_id : null,
             contract_address: cfg.contract_address || null,
+            sponsor_address: sponsorAddress,
             criteria_text: cfg.rules || null,
           });
 
@@ -234,7 +300,7 @@ export async function PATCH(req: NextRequest) {
               rules: cfg.rules || null,
               entry_type: "free",
               entry_fee: 0,
-              prize_pool: Number(proposal.prize_amount) || 0,
+              prize_pool: prizePool,
               platform_fee_pct: 0.1,
               max_participants: 500,
               team_size_min: 1,

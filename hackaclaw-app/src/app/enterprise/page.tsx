@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { usePrivy, useWallets } from "@privy-io/react-auth";
+import { useDeployEscrow } from "@/hooks/useDeployEscrow";
 
 /* ─── Pixel Art Components ─── */
 
@@ -79,6 +81,16 @@ export default function EnterprisePage() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [judgeKeyResult, setJudgeKeyResult] = useState<string | null>(null);
 
+  // Sponsor funding state
+  const [sponsorFunded, setSponsorFunded] = useState(false);
+  const [prizeAmountEth, setPrizeAmountEth] = useState("");
+  const [deployedContract, setDeployedContract] = useState<{ contractAddress: string; txHash: string } | null>(null);
+
+  const { login, authenticated, ready: privyReady } = usePrivy();
+  const { wallets } = useWallets();
+  const { deploy, isDeploying, error: deployError } = useDeployEscrow();
+  const connectedWallet = wallets[0];
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
@@ -86,10 +98,17 @@ export default function EnterprisePage() {
     setErrorMsg(null);
     setJudgeKeyResult(null);
     try {
+      const payload: Record<string, unknown> = { ...form };
+      if (sponsorFunded && deployedContract) {
+        payload.contract_address = deployedContract.contractAddress;
+        payload.funding_tx_hash = deployedContract.txHash;
+        payload.sponsor_wallet = connectedWallet?.address;
+      }
+
       const res = await fetch("/api/v1/proposals", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (data.success) {
@@ -101,6 +120,9 @@ export default function EnterprisePage() {
           hackathon_title: "", hackathon_brief: "", hackathon_deadline: "", hackathon_min_participants: "5",
           hackathon_rules: "", challenge_type: "other",
         });
+        setSponsorFunded(false);
+        setDeployedContract(null);
+        setPrizeAmountEth("");
       } else {
         setErrorMsg(data.error?.message || "Submission failed. Try again.");
       }
@@ -461,6 +483,158 @@ export default function EnterprisePage() {
                 </div>
               </div>
 
+              {/* ═══ SPONSOR FUNDING ═══ */}
+              <div style={{ borderTop: "2px solid rgba(89,65,57,0.15)", paddingTop: 24, marginTop: 4 }}>
+                <label style={{
+                  display: "flex", alignItems: "center", gap: 10, cursor: "pointer",
+                  padding: "14px 16px",
+                  background: sponsorFunded ? "rgba(255,215,0,0.06)" : "rgba(0,0,0,0.3)",
+                  border: `2px solid ${sponsorFunded ? "var(--gold)" : "rgba(89,65,57,0.2)"}`,
+                  transition: "all .15s",
+                }}>
+                  <input type="checkbox" checked={sponsorFunded} onChange={(e) => {
+                    setSponsorFunded(e.target.checked);
+                    if (!e.target.checked) setDeployedContract(null);
+                  }} style={{ accentColor: "var(--gold)", width: 16, height: 16 }} />
+                  <div>
+                    <div className="pixel-font" style={{ fontSize: 9, color: sponsorFunded ? "var(--gold)" : "var(--text-dim)" }}>
+                      FUND ON-CHAIN
+                    </div>
+                    <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>
+                      Deploy an escrow contract and lock prize money on-chain
+                    </div>
+                  </div>
+                </label>
+
+                {sponsorFunded && (
+                  <div style={{
+                    marginTop: 14, padding: "20px 16px",
+                    background: "rgba(255,215,0,0.03)", border: "2px solid rgba(255,215,0,0.1)",
+                    display: "flex", flexDirection: "column", gap: 14,
+                  }}>
+                    {/* Step 1: Connect Wallet */}
+                    <div>
+                      <div className="pixel-font" style={{ fontSize: 8, color: "var(--text-muted)", marginBottom: 8 }}>STEP 1 — CONNECT WALLET</div>
+                      {!authenticated ? (
+                        <button type="button" onClick={login} disabled={!privyReady} className="btn btn-outline" style={{
+                          fontSize: 12, padding: "10px 20px",
+                          opacity: privyReady ? 1 : 0.5,
+                        }}>
+                          Connect Wallet
+                        </button>
+                      ) : connectedWallet ? (
+                        <div style={{
+                          display: "flex", alignItems: "center", gap: 8,
+                          padding: "10px 14px", background: "rgba(74,222,128,0.06)", border: "1px solid rgba(74,222,128,0.2)",
+                        }}>
+                          <div style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--green)" }} />
+                          <code style={{ fontSize: 11, color: "var(--green)" }}>
+                            {connectedWallet.address.slice(0, 6)}...{connectedWallet.address.slice(-4)}
+                          </code>
+                        </div>
+                      ) : (
+                        <div className="pixel-font" style={{ fontSize: 9, color: "var(--text-muted)" }}>
+                          Connecting wallet...
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Step 2: Prize Amount */}
+                    {authenticated && connectedWallet && (
+                      <div>
+                        <div className="pixel-font" style={{ fontSize: 8, color: "var(--text-muted)", marginBottom: 6 }}>STEP 2 — PRIZE AMOUNT (ETH)</div>
+                        <input
+                          type="number" step="0.001" min="0.001"
+                          value={prizeAmountEth}
+                          onChange={(e) => setPrizeAmountEth(e.target.value)}
+                          placeholder="e.g. 0.5"
+                          disabled={!!deployedContract}
+                          style={{ ...inp, maxWidth: 200 }}
+                        />
+                      </div>
+                    )}
+
+                    {/* Step 3: Deploy */}
+                    {authenticated && connectedWallet && prizeAmountEth && !deployedContract && (
+                      <div>
+                        <div className="pixel-font" style={{ fontSize: 8, color: "var(--text-muted)", marginBottom: 8 }}>STEP 3 — DEPLOY & FUND ESCROW</div>
+                        <button
+                          type="button"
+                          disabled={isDeploying || !form.hackathon_deadline}
+                          className="btn btn-gold"
+                          style={{
+                            fontSize: 12, padding: "10px 24px",
+                            opacity: isDeploying || !form.hackathon_deadline ? 0.5 : 1,
+                          }}
+                          onClick={async () => {
+                            if (!form.hackathon_deadline) {
+                              setErrorMsg("Set the hackathon deadline before deploying");
+                              return;
+                            }
+                            const deadlineDate = new Date(form.hackathon_deadline);
+                            if (isNaN(deadlineDate.getTime())) {
+                              setErrorMsg("Invalid deadline date");
+                              return;
+                            }
+
+                            const provider = await connectedWallet.getEthereumProvider();
+                            const deployResult = await deploy({
+                              provider,
+                              sponsorAddress: connectedWallet.address,
+                              prizeAmountEth,
+                              deadlineUnix: Math.floor(deadlineDate.getTime() / 1000),
+                            });
+
+                            if (deployResult) {
+                              setDeployedContract(deployResult);
+                            }
+                          }}
+                        >
+                          {isDeploying ? "Deploying..." : `Deploy & Fund ${prizeAmountEth} ETH`}
+                        </button>
+                        {!form.hackathon_deadline && (
+                          <div className="pixel-font" style={{ fontSize: 8, color: "var(--text-muted)", marginTop: 6 }}>
+                            Set the deadline above first
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Deploy Error */}
+                    {deployError && (
+                      <div className="pixel-font" style={{
+                        fontSize: 9, color: "var(--red)", background: "rgba(255,113,108,0.06)",
+                        padding: "10px 14px", border: "1px solid rgba(255,113,108,0.2)",
+                      }}>
+                        DEPLOY ERROR: {deployError.toUpperCase()}
+                      </div>
+                    )}
+
+                    {/* Deploy Success */}
+                    {deployedContract && (
+                      <div style={{
+                        padding: "16px", background: "rgba(74,222,128,0.06)", border: "2px solid rgba(74,222,128,0.2)",
+                      }}>
+                        <div className="pixel-font" style={{ fontSize: 9, color: "var(--green)", marginBottom: 10 }}>
+                          ESCROW DEPLOYED
+                        </div>
+                        <div style={{ fontSize: 11, color: "var(--text-dim)", marginBottom: 6 }}>
+                          <span style={{ color: "var(--text-muted)" }}>Contract: </span>
+                          <code style={{ color: "var(--green)", wordBreak: "break-all" }}>{deployedContract.contractAddress}</code>
+                        </div>
+                        <div style={{ fontSize: 11, color: "var(--text-dim)" }}>
+                          <span style={{ color: "var(--text-muted)" }}>Tx: </span>
+                          <code style={{ color: "var(--text-dim)", wordBreak: "break-all" }}>{deployedContract.txHash}</code>
+                        </div>
+                        <div className="pixel-font" style={{ fontSize: 8, color: "var(--gold)", marginTop: 10 }}>
+                          {prizeAmountEth} ETH LOCKED. SUBMIT THE FORM TO COMPLETE.
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
               {errorMsg && (
                 <div className="pixel-font" style={{
                   fontSize: 9, color: "var(--red)", background: "rgba(255,113,108,0.06)",
@@ -470,11 +644,12 @@ export default function EnterprisePage() {
                 </div>
               )}
 
-              <button type="submit" disabled={submitting} className="btn btn-primary" style={{
+              <button type="submit" disabled={submitting || (sponsorFunded && !deployedContract)} className="btn btn-primary" style={{
                 width: "100%", padding: "16px", fontSize: 15,
-                opacity: submitting ? 0.6 : 1, cursor: submitting ? "not-allowed" : "pointer",
+                opacity: submitting || (sponsorFunded && !deployedContract) ? 0.6 : 1,
+                cursor: submitting || (sponsorFunded && !deployedContract) ? "not-allowed" : "pointer",
               }}>
-                {submitting ? "Submitting..." : "Submit Challenge"}
+                {submitting ? "Submitting..." : sponsorFunded && !deployedContract ? "Deploy Escrow First" : "Submit Challenge"}
               </button>
 
               <p className="pixel-font" style={{ fontSize: 8, color: "var(--text-muted)", textAlign: "center" }}>
