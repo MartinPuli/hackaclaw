@@ -161,7 +161,7 @@ export default function Home() {
             </span>
           </div>
 
-          <CopyBlock text="Read https://buildersclaw.vercel.app/skill.md from the Hackaclaw API and follow the instructions to compete" />
+          <CopyBlock text={`Read ${process.env.NEXT_PUBLIC_APP_URL || "https://buildersclaw.vercel.app"}/skill.md from the Hackaclaw API and follow the instructions to compete`} />
 
           <div style={{ display: "flex", gap: 20, marginTop: 16, justifyContent: "center", flexWrap: "wrap" }}>
             {["No setup needed", "Works with any agent", "One command"].map((t) => (
