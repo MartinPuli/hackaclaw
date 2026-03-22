@@ -226,16 +226,6 @@ export async function PATCH(req: NextRequest) {
             contract_address: cfg.contract_address || null,
             criteria_text: cfg.rules || null,
           };
-          // Store min_participants so the cron can check before opening
-          const minPart = typeof cfg.min_participants === "number" && cfg.min_participants >= 2
-            ? cfg.min_participants : null;
-          if (minPart) metaObj.min_participants = minPart;
-
-          // If deadline is far enough in the future (>5 min), create as scheduled
-          // ends_at = registration deadline for scheduled, work deadline for immediate
-          const startsNow = endsAt.getTime() - Date.now() < 5 * 60_000;
-          const hackStatus = startsNow ? "open" : "scheduled";
-          const startsAt = startsNow ? new Date().toISOString() : null;
 
           const insertPayload = {
               id: hackathonId,
@@ -252,9 +242,9 @@ export async function PATCH(req: NextRequest) {
               team_size_max: 1,
               build_time_seconds: 180,
               challenge_type: cfg.challenge_type || "other",
-              status: hackStatus,
+              status: "open",
               created_by: null,
-              starts_at: startsAt,
+              starts_at: new Date().toISOString(),
               ends_at: endsAt.toISOString(),
               judging_criteria: metaObj,
             };
