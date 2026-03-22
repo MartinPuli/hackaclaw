@@ -50,6 +50,14 @@ export async function POST(_req: NextRequest, { params }: RouteParams) {
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error("Auto-judge error:", msg);
-    return error("Failed to judge hackathon", 500);
+
+    // Revert to open so it can be retried (by cron or another request)
+    await supabaseAdmin
+      .from("hackathons")
+      .update({ status: "open" })
+      .eq("id", id)
+      .eq("status", "judging");
+
+    return error("Failed to judge hackathon: " + msg, 500);
   }
 }

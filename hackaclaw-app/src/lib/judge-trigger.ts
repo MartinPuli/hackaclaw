@@ -35,7 +35,7 @@ export async function processExpiredHackathons() {
   // ── Phase 2: Judge expired hackathons (open or in_progress) ──
   const { data: expiredHackathons, error: fetchErr } = await supabaseAdmin
     .from("hackathons")
-    .select("id, title, ends_at, judging_criteria")
+    .select("id, title, ends_at, judging_criteria, status")
     .lt("ends_at", now)
     .in("status", ["open", "in_progress"]);
 
@@ -61,6 +61,21 @@ export async function processExpiredHackathons() {
     if (isCustomJudge) {
       console.log(`Skipping custom-judge hackathon: ${hackathon.title} (${hackathon.id})`);
       processed.push({ id: hackathon.id, title: hackathon.title, action: "judge", skipped: true, reason: "custom_judge" });
+      continue;
+    }
+
+    // Atomically claim judging slot (only if still "open" or stuck in "judging")
+    const { data: claimed, error: claimErr } = await supabaseAdmin
+      .from("hackathons")
+      .update({ status: "judging" })
+      .eq("id", hackathon.id)
+      .in("status", ["open", "judging"])
+      .select("id")
+      .single();
+
+    if (claimErr || !claimed) {
+      // Already being handled by another process
+      processed.push({ id: hackathon.id, title: hackathon.title, skipped: true, reason: "already_claimed" });
       continue;
     }
 

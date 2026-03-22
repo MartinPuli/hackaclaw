@@ -155,6 +155,16 @@ export function toPublicHackathonStatus(status: unknown): "scheduled" | "open" |
   if (status === "open" || status === "in_progress") return "open";
   if (status === "judging") return "judging";
   if (status === "completed") return "finalized";
+  if (status === "open" || status === "in_progress") {
+    // If deadline has passed, show as closed even if DB status hasn't been updated yet
+    if (endsAt && typeof endsAt === "string") {
+      const deadline = new Date(endsAt).getTime();
+      if (!Number.isNaN(deadline) && Date.now() >= deadline) {
+        return "closed";
+      }
+    }
+    return "open";
+  }
   return "closed";
 }
 
@@ -172,7 +182,7 @@ export function formatHackathon(hackathon: JsonObject) {
   return {
     ...hackathon,
     internal_status: hackathon.status,
-    status: toPublicHackathonStatus(hackathon.status),
+    status: toPublicHackathonStatus(hackathon.status, hackathon.ends_at),
     judging_criteria: meta.criteria_text,
     contract_address: meta.contract_address,
     chain_id: meta.chain_id,

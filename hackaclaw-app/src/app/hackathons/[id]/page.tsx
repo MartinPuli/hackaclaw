@@ -4,6 +4,7 @@ import type { CSSProperties } from "react";
 import { useState, useEffect, useCallback, useRef, use } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import { getArgentinaHour, formatDeadlineGMT3 } from "@/lib/date-utils";
 
 /* ─── Types ─── */
 
@@ -275,17 +276,11 @@ function PixelTurbine() {
 /* ─── Day/Night Cycle (Argentina GMT-3) ─── */
 
 function useArgentinaTime() {
-  const [hour, setHour] = useState(() => {
-    const now = new Date();
-    const utc = now.getTime() + now.getTimezoneOffset() * 60000;
-    return new Date(utc - 3 * 3600000).getHours();
-  });
+  const [hour, setHour] = useState(() => getArgentinaHour());
 
   useEffect(() => {
     const interval = setInterval(() => {
-      const now = new Date();
-      const utc = now.getTime() + now.getTimezoneOffset() * 60000;
-      setHour(new Date(utc - 3 * 3600000).getHours());
+      setHour(getArgentinaHour());
     }, 60000);
     return () => clearInterval(interval);
   }, []);
@@ -899,6 +894,13 @@ function HackathonBadge({
                   </div>
                 )}
 
+                {hackathon.ends_at && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-[var(--text-muted)]">DEADLINE</span>
+                    <span className="text-white" style={{ fontSize: 7 }}>{formatDeadlineGMT3(hackathon.ends_at)}</span>
+                  </div>
+                )}
+
                 <div className="flex justify-between items-center">
                   <span className="text-[var(--text-muted)]">TEAMS</span>
                   <span className="text-white">{teamsCount}</span>
@@ -1302,18 +1304,7 @@ export default function HackathonDetailPage({ params }: { params: Promise<{ id: 
     fetchData().finally(() => setLoading(false));
   }, [fetchData]);
 
-  // Auto-refresh teams every 10s while hackathon is active
-  useEffect(() => {
-    if (!hackathon || hackathon.status === "finalized" || judging) return;
-    const interval = setInterval(() => {
-      fetch(`/api/v1/hackathons/${id}/judge`).then(r => r.json()).then(tRes => {
-        if (tRes.success) setTeams(tRes.data);
-      }).catch(() => {});
-    }, 10_000);
-    return () => clearInterval(interval);
-  }, [id, hackathon, judging]);
-
-  // Called when countdown hits 0
+  // Called when countdown hits 0 or when page loads after deadline passed
   const handleDeadlineExpired = useCallback(async () => {
     setJudging(true);
     try {
@@ -1343,6 +1334,30 @@ export default function HackathonDetailPage({ params }: { params: Promise<{ id: 
       await fetchData();
     }
   }, [id, fetchData]);
+
+  // Auto-refresh teams every 10s while hackathon is active
+  useEffect(() => {
+    if (!hackathon || hackathon.status === "finalized" || judging) return;
+    const interval = setInterval(() => {
+      fetch(`/api/v1/hackathons/${id}/judge`).then(r => r.json()).then(tRes => {
+        if (tRes.success) setTeams(tRes.data);
+      }).catch(() => {});
+    }, 10_000);
+    return () => clearInterval(interval);
+  }, [id, hackathon, judging]);
+
+  // If user arrives after the deadline has passed but hackathon isn't finalized yet,
+  // trigger the check-deadline to kick off judging
+  useEffect(() => {
+    if (!hackathon || judging) return;
+    if (hackathon.status === "finalized") return;
+    if (!hackathon.ends_at) return;
+
+    const deadline = new Date(hackathon.ends_at).getTime();
+    if (Date.now() >= deadline) {
+      handleDeadlineExpired();
+    }
+  }, [hackathon, judging, handleDeadlineExpired]);
 
   if (loading || !hackathon) {
     return (

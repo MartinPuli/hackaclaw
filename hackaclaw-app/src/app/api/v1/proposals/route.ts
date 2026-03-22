@@ -2,6 +2,7 @@ import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { authenticateAdminRequest, hashToken } from "@/lib/auth";
+import { serializeHackathonMeta } from "@/lib/hackathons";
 import { v4 as uuid } from "uuid";
 
 function sanitize(val: unknown, max: number): string | null {
@@ -43,6 +44,8 @@ export async function POST(req: NextRequest) {
       deadline: sanitize(body.hackathon_deadline, 30),
       min_participants: Math.max(2, Math.min(500, Number(body.hackathon_min_participants) || 5)),
       challenge_type: sanitize(body.challenge_type, 50) || "other",
+      contract_address: sanitize(body.contract_address, 128),
+      chain_id: Number.isInteger(Number(body.chain_id)) ? Number(body.chain_id) : null,
     };
 
     if (!hackathonConfig.title || !hackathonConfig.brief || !hackathonConfig.deadline) {
@@ -116,7 +119,7 @@ export async function POST(req: NextRequest) {
     // If custom judge, return the key — this is the ONLY time it's shown
     if (judgeKey) {
       responseData.judge_api_key = judgeKey;
-      responseData.judge_skill_url = "https://buildersclaw.vercel.app/judge-skill.md";
+      responseData.judge_skill_url = "https://hackaclaw.vercel.app/judge-skill.md";
       responseData.judge_instructions = "Save this judge API key NOW — it will NOT be shown again. It activates when your hackathon is approved. Tell your judge agent to read the judge-skill.md for instructions.";
     }
 
@@ -196,30 +199,32 @@ export async function PATCH(req: NextRequest) {
         title?: string; brief?: string; rules?: string;
         deadline?: string; min_participants?: number; challenge_type?: string;
         judge_key_hash?: string;
+        contract_address?: string;
+        chain_id?: number | null;
       };
 
       if (cfg.title && cfg.brief && cfg.deadline) {
-        const endsAt = new Date(cfg.deadline);
-        if (!isNaN(endsAt.getTime()) && endsAt.getTime() > Date.now()) {
-          hackathonId = uuid();
+        // The deadline from the form is in GMT-3 (Argentina time).
+        // Append -03:00 offset so Date parses it correctly as GMT-3.
+        const deadlineStr = cfg.deadline.includes("T")
+          ? cfg.deadline + (cfg.deadline.includes("+") || cfg.deadline.includes("-", 10) || cfg.deadline.endsWith("Z") ? "" : "-03:00")
+          : cfg.deadline;
+        const endsAt = new Date(deadlineStr);
+        if (isNaN(endsAt.getTime())) {
+          return NextResponse.json(
+            { success: false, error: { message: `Invalid deadline date: "${cfg.deadline}". Cannot create hackathon.` } },
+            { status: 400 },
+          );
+        }
 
-          const isCustomJudge = proposal.judge_agent === "own";
+        // Allow past deadlines on approve — admin may want to adjust later
+        hackathonId = uuid();
 
-          const judgingCriteria = {
-            _format: "hackaclaw-mvp-v1",
-            judge_type: isCustomJudge ? "custom" : "platform",
-            ...(isCustomJudge && cfg.judge_key_hash ? { judge_key_hash: cfg.judge_key_hash } : {}),
-            enterprise_problem: proposal.problem_description,
-            enterprise_requirements: proposal.tech_requirements || null,
-            judging_priorities: proposal.judging_priorities || null,
+          const judgingCriteria = serializeHackathonMeta({
+            chain_id: typeof cfg.chain_id === "number" ? cfg.chain_id : null,
+            contract_address: cfg.contract_address || null,
             criteria_text: cfg.rules || null,
-            prize_amount: proposal.prize_amount || 0,
-            company: proposal.company,
-            winner_agent_id: null,
-            winner_team_id: null,
-            finalized_at: null,
-            notes: null,
-          };
+          });
 
           const insertPayload = {
               id: hackathonId,
@@ -253,7 +258,6 @@ export async function PATCH(req: NextRequest) {
           } else {
             hackathonUrl = `/hackathons/${hackathonId}`;
           }
-        }
       }
     }
 
@@ -276,6 +280,9 @@ export async function PATCH(req: NextRequest) {
         id,
         status: hackathonId ? "hackathon_created" : newStatus,
         ...(hackathonId ? { hackathon_id: hackathonId, hackathon_url: hackathonUrl } : {}),
+        ...(hackathonId && proposal.hackathon_config && typeof (proposal.hackathon_config as { contract_address?: string }).contract_address === "string"
+          ? { contract_address: (proposal.hackathon_config as { contract_address?: string }).contract_address }
+          : {}),
       },
     });
   } catch {
