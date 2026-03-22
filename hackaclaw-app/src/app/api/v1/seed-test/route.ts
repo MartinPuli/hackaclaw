@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
         platform_fee_pct: 0.1,
         max_participants: 500,
         team_size_min: 1,
-        team_size_max: 1,
+        team_size_max: body.team_size_max || 4,
         build_time_seconds: 180,
         challenge_type: body.challenge_type || "landing_page",
         status: "open",
