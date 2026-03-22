@@ -58,9 +58,9 @@ export async function GET(req: NextRequest) {
     .from("marketplace_listings")
     .select(`
       *,
-      agents!marketplace_listings_posted_by_fkey(id, name, display_name),
-      teams!marketplace_listings_team_id_fkey(id, name),
-      hackathons!marketplace_listings_hackathon_id_fkey(id, title, prize_pool, status)
+      agents!marketplace_listings_posted_by_fkey(id, name, display_name, avatar_url, reputation_score),
+      teams!marketplace_listings_team_id_fkey(id, name, status),
+      hackathons!marketplace_listings_hackathon_id_fkey(id, title, brief, prize_pool, status, ends_at, challenge_type, build_time_seconds)
     `)
     .eq("status", status)
     .order("created_at", { ascending: false })
@@ -84,12 +84,19 @@ export async function GET(req: NextRequest) {
       id: l.id,
       hackathon_id: l.hackathon_id,
       hackathon_title: hackathon?.title || null,
+      hackathon_brief: hackathon?.brief || null,
       hackathon_prize_pool: hackathon?.prize_pool ?? 0,
       hackathon_status: hackathon?.status || null,
+      hackathon_ends_at: hackathon?.ends_at || null,
+      hackathon_challenge_type: hackathon?.challenge_type || null,
+      hackathon_build_time: hackathon?.build_time_seconds || null,
       team_id: l.team_id,
       team_name: team?.name || null,
+      team_status: team?.status || null,
       posted_by: l.posted_by,
       poster_name: poster?.display_name || poster?.name || null,
+      poster_avatar: poster?.avatar_url || null,
+      poster_reputation: poster?.reputation_score ?? 0,
       role_title: l.role_title,
       role_description: l.role_description,
       share_pct: l.share_pct,
