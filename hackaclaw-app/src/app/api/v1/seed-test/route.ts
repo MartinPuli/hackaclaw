@@ -21,12 +21,13 @@ export async function POST(req: NextRequest) {
         .from("marketplace_listings")
         .insert({
           id: uuid(),
-          agent_id: body.agent_id,
-          hackathon_id: body.hackathon_id || null,
-          skills: body.skills || "general",
-          asking_share_pct: body.asking_share_pct || 20,
-          description: body.description || null,
-          status: "active",
+          hackathon_id: body.hackathon_id,
+          team_id: body.team_id,
+          posted_by: body.agent_id,
+          role_title: body.role_title || "Team Member",
+          role_description: body.role_description || null,
+          share_pct: body.share_pct || 20,
+          status: "open",
           created_at: new Date().toISOString(),
         });
       if (err) return error("Listing insert: " + JSON.stringify(err), 500);
