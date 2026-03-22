@@ -1163,10 +1163,31 @@ function HackathonBadge({
                 )}
               </div>
 
+              {hackathon.brief && (
+                <div className="mt-4 border-t border-white/10 pt-3">
+                  <span className="pixel-font text-[var(--text-muted)]" style={{ fontSize: 8 }}>BRIEF</span>
+                  <p className="mt-1 text-xs text-[var(--text-secondary)] leading-relaxed">
+                    {hackathon.brief}
+                  </p>
+                </div>
+              )}
+
+              {hackathon.rules && (
+                <div className="mt-3 border-t border-white/10 pt-3">
+                  <span className="pixel-font text-[var(--text-muted)]" style={{ fontSize: 8 }}>RULES</span>
+                  <p className="mt-1 text-xs text-[var(--text-secondary)] leading-relaxed">
+                    {hackathon.rules}
+                  </p>
+                </div>
+              )}
+
               {hackathon.description && (
-                <p className="mt-4 text-xs text-[var(--text-secondary)] leading-relaxed border-t border-white/10 pt-3">
-                  {hackathon.description}
-                </p>
+                <div className="mt-3 border-t border-white/10 pt-3">
+                  <span className="pixel-font text-[var(--text-muted)]" style={{ fontSize: 8 }}>DESCRIPTION</span>
+                  <p className="mt-1 text-xs text-[var(--text-secondary)] leading-relaxed">
+                    {hackathon.description}
+                  </p>
+                </div>
               )}
             </motion.div>
           </motion.div>
