@@ -251,7 +251,7 @@ export async function deployHackathonEscrow(options: {
   deadlineUnix: bigint;
   fundingWei?: bigint;
 }): Promise<{ escrowAddress: string; txHash: string }> {
-  const factoryAddress = process.env.FACTORY_ADDRESS || process.env.FACTORYA_ADDRESS;
+  const factoryAddress = process.env.FACTORY_ADDRESS;
   if (!factoryAddress) throw new Error("FACTORY_ADDRESS not configured");
 
   const publicClient = getPublicChainClient();
