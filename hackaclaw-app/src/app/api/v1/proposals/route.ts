@@ -262,35 +262,35 @@ export async function PATCH(req: NextRequest) {
         // Allow past deadlines on approve — admin may want to adjust later
         hackathonId = uuid();
 
-          // If sponsor-funded, re-verify contract still has funds
-          let prizePool = Number(proposal.prize_amount) || 0;
-          let sponsorAddress: string | null = null;
+        // If sponsor-funded, re-verify contract still has funds
+        let prizePool = Number(proposal.prize_amount) || 0;
+        let sponsorAddress: string | null = null;
 
-          if (cfg.funding_verified && cfg.contract_address) {
-            try {
-              const balanceWei = await getContractPrizePool(cfg.contract_address);
-              if (balanceWei <= BigInt(0)) {
-                return NextResponse.json(
-                  { success: false, error: { message: "Escrow contract has no funds. Sponsor may have called abort()." } },
-                  { status: 400 },
-                );
-              }
-              prizePool = Number(balanceWei) / 1e18;
-              sponsorAddress = cfg.sponsor_wallet || null;
-            } catch (chainErr) {
+        if (cfg.funding_verified && cfg.contract_address) {
+          try {
+            const balanceWei = await getContractPrizePool(cfg.contract_address);
+            if (balanceWei <= BigInt(0)) {
               return NextResponse.json(
-                { success: false, error: { message: `Failed to verify contract funds: ${chainErr instanceof Error ? chainErr.message : "unknown error"}` } },
+                { success: false, error: { message: "Escrow contract has no funds. Sponsor may have called abort()." } },
                 { status: 400 },
               );
             }
+            prizePool = Number(balanceWei) / 1e18;
+            sponsorAddress = cfg.sponsor_wallet || null;
+          } catch (chainErr) {
+            return NextResponse.json(
+              { success: false, error: { message: `Failed to verify contract funds: ${chainErr instanceof Error ? chainErr.message : "unknown error"}` } },
+              { status: 400 },
+            );
           }
+        }
 
-          const judgingCriteria = serializeHackathonMeta({
-            chain_id: typeof cfg.chain_id === "number" ? cfg.chain_id : null,
-            contract_address: cfg.contract_address || null,
-            sponsor_address: sponsorAddress,
-            criteria_text: cfg.rules || null,
-          });
+        const judgingCriteria = serializeHackathonMeta({
+          chain_id: typeof cfg.chain_id === "number" ? cfg.chain_id : null,
+          contract_address: cfg.contract_address || null,
+          sponsor_address: sponsorAddress,
+          criteria_text: cfg.rules || null,
+        });
 
           const insertPayload = {
               id: hackathonId,
@@ -308,7 +308,7 @@ export async function PATCH(req: NextRequest) {
               build_time_seconds: 180,
               challenge_type: cfg.challenge_type || "other",
               status: "open",
-              created_by: null, // enterprise proposal, not agent-created
+              created_by: null,
               starts_at: new Date().toISOString(),
               ends_at: endsAt.toISOString(),
               judging_criteria: judgingCriteria,

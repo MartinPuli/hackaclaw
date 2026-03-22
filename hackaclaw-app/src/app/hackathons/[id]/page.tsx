@@ -879,6 +879,7 @@ function HackathonBadge({
                   <span style={{
                     color: hackathon.status === "finalized" ? "#ffd700"
                       : hackathon.status === "open" ? "#00ffaa"
+                      : hackathon.status === "judging" ? "#ffa500"
                       : "#87ceeb",
                   }}>
                     {hackathon.status.toUpperCase().replace("_", " ")}
@@ -1165,15 +1166,15 @@ function CompletedLeaderboard({
 
   return (
     <SkyWrapper skyTheme={skyTheme} sunAngle={sunAngle} moonAngle={moonAngle}>
-      <div style={{ maxWidth: 640, margin: "0 auto", padding: "90px 24px 100px" }}>
-        {/* Back */}
-        <div style={{ textAlign: "left", marginBottom: 32 }}>
-          <Link href="/hackathons" className="pixel-font text-white hover:text-[#ffd700] transition-colors"
-            style={{ fontSize: 14, textShadow: "2px 2px 0 rgba(0,0,0,0.6)", background: "rgba(0,0,0,0.3)", padding: "8px 16px", display: "inline-block" }}>
-            {"<"} BACK
-          </Link>
-        </div>
+      {/* Back — full width, left aligned */}
+      <div className="w-full px-4" style={{ paddingTop: 80, textAlign: "left", maxWidth: "100%" }}>
+        <Link href="/hackathons" className="pixel-font text-white hover:text-[#ffd700] transition-colors"
+          style={{ fontSize: 14, textShadow: "2px 2px 0 rgba(0,0,0,0.6)", background: "rgba(0,0,0,0.3)", padding: "8px 16px", display: "inline-block" }}>
+          {"<"} BACK
+        </Link>
+      </div>
 
+      <div style={{ maxWidth: 640, margin: "0 auto", padding: "24px 24px 100px" }}>
         {/* Title */}
         <div style={{ textAlign: "center", marginBottom: 40 }}>
           <div style={{ fontSize: 56, marginBottom: 8 }}>🏆</div>

@@ -326,12 +326,6 @@ function HackathonSection({
                       <div style={{ fontSize: 9, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.08em", marginTop: 1 }}>Agents</div>
                     </div>
                   </div>
-                  <div style={{ textAlign: "right" }}>
-                    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 15, fontWeight: 700, color: "var(--primary)" }}>
-                      {hackathon.build_time_seconds}s
-                    </div>
-                    <div style={{ fontSize: 9, color: "var(--text-muted)", textTransform: "uppercase", marginTop: 1 }}>Build</div>
-                  </div>
                 </div>
               </div>
             </Link>
@@ -382,14 +376,21 @@ export default function HackathonsPage() {
         );
 
         setTeamsMap(nextTeamsMap);
+
+        // Fire-and-forget: trigger check-deadline for any expired open hackathons
+        for (const h of payload.data as HackathonSummary[]) {
+          if ((h.status === "open" || h.status === "judging") && h.ends_at && new Date(h.ends_at).getTime() < Date.now()) {
+            fetch(`/api/v1/hackathons/${h.id}/check-deadline`, { method: "POST" }).catch(() => {});
+          }
+        }
       })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 
-  const openHackathons = hackathons.filter((hackathon) => hackathon.status === "open");
-  const closedHackathons = hackathons.filter((hackathon) => hackathon.status === "closed");
-  const finalizedHackathons = hackathons.filter((hackathon) => hackathon.status === "finalized");
+  const openHackathons = hackathons.filter((h) => h.status === "open" || h.status === "judging");
+  const closedHackathons = hackathons.filter((h) => h.status === "closed");
+  const finalizedHackathons = hackathons.filter((h) => h.status === "finalized");
 
   if (loading) {
     return (

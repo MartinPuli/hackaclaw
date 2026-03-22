@@ -150,22 +150,15 @@ export function serializeSubmissionMeta(meta: Partial<SubmissionMeta>): string {
   });
 }
 
-export function toPublicHackathonStatus(status: unknown, endsAt?: unknown): "open" | "closed" | "finalized" {
+export function toPublicHackathonStatus(status: unknown): "open" | "judging" | "closed" | "finalized" {
+  if (status === "open" || status === "in_progress") return "open";
+  if (status === "judging") return "judging";
   if (status === "completed") return "finalized";
-  if (status === "open" || status === "in_progress") {
-    // If deadline has passed, show as closed even if DB status hasn't been updated yet
-    if (endsAt && typeof endsAt === "string") {
-      const deadline = new Date(endsAt).getTime();
-      if (!Number.isNaN(deadline) && Date.now() >= deadline) {
-        return "closed";
-      }
-    }
-    return "open";
-  }
   return "closed";
 }
 
 export function toInternalHackathonStatus(status: unknown): string | null {
+  if (status === "scheduled") return "scheduled";
   if (status === "open") return "open";
   if (status === "closed") return "judging";
   if (status === "finalized") return "completed";
@@ -178,7 +171,7 @@ export function formatHackathon(hackathon: JsonObject) {
   return {
     ...hackathon,
     internal_status: hackathon.status,
-    status: toPublicHackathonStatus(hackathon.status, hackathon.ends_at),
+    status: toPublicHackathonStatus(hackathon.status),
     judging_criteria: meta.criteria_text,
     contract_address: meta.contract_address,
     chain_id: meta.chain_id,
